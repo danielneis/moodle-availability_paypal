@@ -41,11 +41,41 @@ class condition extends \core_availability\condition {
      * @throws \coding_exception If invalid data structure.
      */
     public function __construct($structure) {
-        $this->allow = true;
+        if (isset($structure->businessemail)) {
+            $this->businessemail = $structure->businessemail;
+        }
+        if (isset($structure->currency)) {
+            $this->currency = $structure->currency;
+        }
+        if (isset($structure->cost)) {
+            $this->cost = $structure->cost;
+        }
+        if (isset($structure->itemname)) {
+            $this->itemname= $structure->itemname;
+        }
+        if (isset($structure->itemnumber)) {
+            $this->itemnumber = $structure->itemnumber;
+        }
     }
 
     public function save() {
-        return (object)array('type' => 'paypal');
+        $result = (object)array('type' => 'paypal');
+        if ($this->businessemail) {
+            $result->businessemail = $this->businessemail;
+        }
+        if ($this->currency) {
+            $result->currency = $this->currency;
+        }
+        if ($this->cost) {
+            $result->cost = $this->cost;
+        }
+        if ($this->itemname) {
+            $result->itemname= $this->itemname;
+        }
+        if ($this->itemnumber) {
+            $result->itemnumber = $this->itemnumber;
+        }
+        return $result;
     }
 
     /**
@@ -56,16 +86,22 @@ class condition extends \core_availability\condition {
      *
      * @return stdClass Object representing condition
      */
-    public static function get_json() {
-        return (object)array('type' => 'paypal');
+    public static function get_json($businessemail, $currency, $cost) {
+        return (object)array('type' => 'paypal', 'businessemail' => $businessemail, 'currency' => $currency, 'cost' => $cost);
     }
 
     public function is_available($not, \core_availability\info $info, $grabthelot, $userid) {
-        return $not;
+        global $DB;
+        // should double-check with paypal everytime ?
+        $context = $info->get_context();
+        return $DB->record_exists('paypal_transactions',
+                                  array('userid' => $userid,
+                                        'contextid' => $context->id,
+                                        'payment_status' => 'Completed'));
     }
 
     public function get_description($full, $not, \core_availability\info $info) {
-        return $this->get_either_description($not, false);
+        return $this->get_either_description($not, false, $info);
     }
     /**
      * Shows the description using the different lang strings for the standalone
@@ -74,16 +110,13 @@ class condition extends \core_availability\condition {
      * @param bool $not True if NOT is in force
      * @param bool $standalone True to use standalone lang strings
      */
-    protected function get_either_description($not, $standalone) {
-        return get_string('eitherdescription', 'availability_paypal');
+    protected function get_either_description($not, $standalone, $info) {
+        $context = $info->get_context();
+        $url = new \moodle_url('/availability/condition/paypal/view.php?contextid='.$context->id);
+        return get_string('eitherdescription', 'availability_paypal', $url->out());
     }
 
-    protected function get_debug_string() {
-        return gmdate('Y-m-d H:i:s');
-    }
-
-    public function update_after_restore(
-            $restoreid, $courseid, \base_logger $logger, $name) {
+    public function update_after_restore($restoreid, $courseid, \base_logger $logger, $name) {
         // Update the date, if restoring with changed date.
         $dateoffset = \core_availability\info::get_restore_date_offset($restoreid);
         if ($dateoffset) {
@@ -91,5 +124,9 @@ class condition extends \core_availability\condition {
             return true;
         }
         return false;
+    }
+
+    protected function get_debug_string() {
+        return gmdate('Y-m-d H:i:s');
     }
 }
