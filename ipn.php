@@ -89,9 +89,21 @@ if (! $context = context::instance_by_id($data->contextid, IGNORE_MISSING)) {
     die;
 }
 
-if (! $plugininstance = $DB->get_record("paypal", array("id" => $data->instanceid))) {
-    paypal_message_error_to_admin("Not a valid instance id", $data);
-    die;
+$instanceid = $context->__get('instanceid');
+if ($context instanceof context_module) {
+    $availability = $DB->get_field('course_modules', 'availability', array('id' => $instanceid), MUST_EXIST);
+    $availability = json_decode($availability);
+    foreach ($availability->c as $condition) {
+        if ($condition->type == 'paypal') {
+            // TODO: handle more than one paypal for this context
+            $paypal = $condition;
+            break;
+        } else {
+            paypal_message_error_to_admin("Not a valid context id", $data);
+        }
+    }
+} else {
+    //TODO: handle sections
 }
 
 // Open a connection back to PayPal to validate the data
@@ -129,7 +141,7 @@ if (strlen($result) > 0) {
         }
 
         // If currency is incorrectly set then someone maybe trying to cheat the system.
-        if ($data->payment_currency != $plugininstance->currency) {
+        if ($data->payment_currency != $paypal->currency) {
             paypal_message_error_to_admin("Currency does not match course settings, received: ".$data->payment_currency, $data);
             die;
         }
@@ -168,9 +180,9 @@ if (strlen($result) > 0) {
         }
 
         // Check that the email is the one we want it to be.
-        if (core_text::strtolower($data->business) !== core_text::strtolower($plugininstance->businessemail)) {
+        if (core_text::strtolower($data->business) !== core_text::strtolower($paypal->businessemail)) {
             paypal_message_error_to_admin("Business email is {$data->business} (not ".
-                                            $plugininstance->businessemail.")", $data);
+                                            $paypal->businessemail.")", $data);
             die;
         }
 
@@ -189,10 +201,10 @@ if (strlen($result) > 0) {
         $coursecontext = context_course::instance($course->id, IGNORE_MISSING);
 
         // Check that amount paid is the correct amount.
-        if ( (float) $plugininstance->cost < 0 ) {
+        if ( (float) $paypal->cost < 0 ) {
             $cost = (float) 0;
         } else {
-            $cost = (float) $plugininstance->cost;
+            $cost = (float) $paypal->cost;
         }
 
         // Use the same rounding of floats as on the plugin form.
@@ -215,9 +227,9 @@ if (strlen($result) > 0) {
         }
 
         /*
-        $mailstudents = $plugininstance->mailstudents;
-        $mailteachers = $plugininstance->mailteachers;
-        $mailadmins   = $plugininstance->mailadmins;
+        $mailstudents = $paypal->mailstudents;
+        $mailteachers = $paypal->mailteachers;
+        $mailadmins   = $paypal->mailadmins;
         $shortname = format_string($course->shortname, true, array('context' => $context));
 
         if (!empty($mailstudents)) {
@@ -282,7 +294,6 @@ if (strlen($result) > 0) {
 }
 
 function paypal_message_error_to_admin($subject, $data) {
-    echo $subject;
     $admin = get_admin();
     $site = get_site();
 

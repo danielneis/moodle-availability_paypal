@@ -41,3 +41,4 @@ $string['paymentpending'] = 'There is a pending payment registered for you.';
 $string['paymentrequired'] = 'You must make a payment via PayPal to access the activity or resource.';
 $string['paymentwaitreminder'] = 'Please note that if you already made a payment recently, it should be processing. Please wait a few minutes and refresh this page.';
 $string['sendpaymentbutton'] = 'Send payment via PayPal';
+$string['paypalaccepted'] = 'PayPal payments accepted';

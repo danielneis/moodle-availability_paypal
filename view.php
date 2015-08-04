@@ -75,17 +75,17 @@ $PAGE->navbar->add($paypal->itemname);
 echo $OUTPUT->header();
 
 // Replace the following lines with you own code.
-echo $OUTPUT->heading($paypal->name);
+echo $OUTPUT->heading($paypal->itemname);
 
 // Conditions to show the intro can change to look for own settings or whatever.
 if ($paymenttnx = $DB->get_record('paypal_transactions',
                                    array('userid' => $USER->id,
-                                         'instanceid' => $paypal->id))) {
+                                         'contextid' => $contextid))) {
 
-    if ($payment_tnx->payment_status == 'Completed') {
+    if ($paymenttnx->payment_status == 'Completed') {
         // should double-check with paypal everytime ?
         echo get_string('paymentcompleted', 'availability_paypal');
-    } else if ($payment_tnx->payment_status == 'Pending') {
+    } else if ($paymenttnx->payment_status == 'Pending') {
         echo get_string('paymentpending', 'availability_paypal');
     }
 
@@ -116,7 +116,6 @@ if ($paymenttnx = $DB->get_record('paypal_transactions',
         $userlastname    = $USER->lastname;
         $useraddress     = $USER->address;
         $usercity        = $USER->city;
-        $instancename    = $paypal->name;
 ?>
         <p><?php print_string("paymentrequired", 'availability_paypal') ?></p>
         <p><b><?php echo get_string("cost").": {$paypal->currency} {$localisedcost}"; ?></b></p>
