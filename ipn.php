@@ -29,7 +29,7 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-require("../../config.php");
+require("../../../config.php");
 require_once($CFG->libdir.'/eventslib.php');
 require_once($CFG->libdir . '/filelib.php');
 
