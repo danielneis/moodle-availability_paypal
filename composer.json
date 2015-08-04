@@ -1,0 +1,19 @@
+{
+    "name": "danielneis/moodle-availability_paypal",
+    "description": "An Availability Condition for Moodle to require a PayPal payment to access activities and resources.",
+    "type": "moodle-availability",
+    "license": "GPLv3",
+    "authors": [
+        {
+            "name": "Daniel Neis Araujo",
+            "email": "danielneis@gmail.com"
+        }
+    ],
+    "require": {
+        "composer/installers": "~1.0"
+    },
+    "extra": {
+        "installer-name": "paypal"
+    }
+}
+

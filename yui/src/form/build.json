@@ -1,0 +1,10 @@
+{
+  "name": "moodle-availability_paypal-form",
+  "builds": {
+    "moodle-availability_paypal-form": {
+      "jsfiles": [
+        "form.js"
+      ]
+    }
+  }
+}
