@@ -12,6 +12,23 @@ M.availability_paypal = M.availability_paypal || {};
 M.availability_paypal.form = Y.Object(M.core_availability.plugin);
 
 M.availability_paypal.form.getNode = function(json) {
+    // See https://www.paypal.com/cgi-bin/webscr?cmd=p/sell/mc/mc_intro-outside,
+    // 3-character ISO-4217:
+    // https://cms.paypal.com/us/cgi-bin/?cmd=_render-content&content_ID=developer/e_howto_api_currency_codes
+    var codes = ['AUD', 'BRL', 'CAD', 'CHF', 'CZK', 'DKK', 'EUR', 'GBP', 'HKD', 'HUF', 'ILS', 'JPY',
+                 'MXN', 'MYR', 'NOK', 'NZD', 'PHP', 'PLN', 'RUB', 'SEK', 'SGD', 'THB', 'TRY', 'TWD', 'USD'];
+    var currencies_options = '';
+    var selected_string = '';
+    codes.forEach(function(c) {
+        if (json.currency && json.currency == c) {
+            selected_string = ' selected="selected" ';
+        } else {
+            selected_string = '';
+        }
+        currencies_options += '<option value="'+c+'" '+selected_string+' >' +
+                                M.util.get_string(c, 'availability_paypal') +
+                              '</option>';
+    });
 
     var html = '<div><label>' +
                 M.util.get_string('businessemail', 'availability_paypal') +
@@ -19,7 +36,7 @@ M.availability_paypal.form.getNode = function(json) {
               
                 '<div><label>' +
                  M.util.get_string('currency', 'availability_paypal') +
-                '<input name="currency" type="text" /></label></div>' +
+                '<select name="currency" type="text" />'+currencies_options+'</select></label></div>' +
 
                 '<div><label>' +
                  M.util.get_string('cost', 'availability_paypal') +
@@ -38,9 +55,6 @@ M.availability_paypal.form.getNode = function(json) {
     // database. This will have values undefined if creating a new one.
     if (json.businessemail) {
         node.one('input[name=businessemail]').set('value', json.businessemail);
-    }
-    if (json.currency) {
-        node.one('input[name=currency]').set('value', json.currency);
     }
     if (json.cost) {
         node.one('input[name=cost]').set('value', json.cost);
@@ -77,7 +91,7 @@ M.availability_paypal.form.fillValue = function(value, node) {
     var businessemailinput = node.one('input[name=businessemail]');
     value.businessemail = businessemailinput.get('value');
 
-    var currencyinput = node.one('input[name=currency]');
+    var currencyinput = node.one('select[name=currency]');
     value.currency = currencyinput.get('value');
 
     var costinput = node.one('input[name=cost]');

@@ -34,7 +34,11 @@ defined('MOODLE_INTERNAL') || die();
 class frontend extends \core_availability\frontend {
 
     protected function get_javascript_strings() {
-        return array('ajaxerror', 'businessemail', 'currency', 'cost', 'itemname', 'itemnumber');
+        $strings = array(
+            'AUD', 'BRL', 'CAD', 'CHF', 'CZK', 'DKK', 'EUR', 'GBP', 'HKD', 'HUF', 'ILS', 'JPY',
+            'MXN', 'MYR', 'NOK', 'NZD', 'PHP', 'PLN', 'RUB', 'SEK', 'SGD', 'THB', 'TRY', 'TWD', 'USD',
+            'ajaxerror', 'businessemail', 'currency', 'cost', 'itemname', 'itemnumber');
+        return $strings;
     }
 
     protected function allow_add($course, \cm_info $cm = null,
