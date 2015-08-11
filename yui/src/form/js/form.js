@@ -13,31 +13,43 @@ M.availability_paypal.form = Y.Object(M.core_availability.plugin);
 
 M.availability_paypal.form.getNode = function(json) {
 
-    var html = '<label>' +
+    var html = '<div><label>' +
                 M.util.get_string('businessemail', 'availability_paypal') +
-               '<input name="businessemail" type="email" /></label>' +
+               '<input name="businessemail" type="email" /></label></div>' +
               
-                '<label>' +
+                '<div><label>' +
                  M.util.get_string('currency', 'availability_paypal') +
-                '<input name="currency" type="text" /></label>' +
+                '<input name="currency" type="text" /></label></div>' +
 
-                '<label>' +
+                '<div><label>' +
                  M.util.get_string('cost', 'availability_paypal') +
-                '<input name="cost" type="text" /></label>' +
+                '<input name="cost" type="text" /></label></div>' +
 
-                '<label>' +
+                '<div><label>' +
                  M.util.get_string('itemname', 'availability_paypal') +
-                '<input name="itemname" type="text" /></label>' +
+                '<input name="itemname" type="text" /></label></div>' +
 
-                '<label>' +
+                '<div><label>' +
                  M.util.get_string('itemnumber', 'availability_paypal') +
-                '<input name="itemnumber" type="text" /></label>' ;
+                '<input name="itemnumber" type="text" /></label></div>' ;
     var node = Y.Node.create('<span>' + html + '</span>');
 
     // Set initial values based on the value from the JSON data in Moodle
     // database. This will have values undefined if creating a new one.
     if (json.businessemail) {
         node.one('input[name=businessemail]').set('value', json.businessemail);
+    }
+    if (json.currency) {
+        node.one('input[name=currency]').set('value', json.currency);
+    }
+    if (json.cost) {
+        node.one('input[name=cost]').set('value', json.cost);
+    }
+    if (json.itemname) {
+        node.one('input[name=itemname]').set('value', json.itemname);
+    }
+    if (json.itemnumber) {
+        node.one('input[name=itemnumber]').set('value', json.itemnumber);
     }
 
     // Add event handlers (first time only). You can do this any way you
