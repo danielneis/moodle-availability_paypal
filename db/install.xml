@@ -29,9 +29,8 @@
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
-        <KEY NAME="course_idx" TYPE="foreign" FIELDS="courseid" REFTABLE="course" REFFIELDS="id"/>
+        <KEY NAME="context_idx" TYPE="foreign" FIELDS="contextid" REFTABLE="context" REFFIELDS="id"/>
         <KEY NAME="user_idx" TYPE="foreign" FIELDS="userid" REFTABLE="user" REFFIELDS="id"/>
-        <KEY NAME="instance_idx" TYPE="foreign" FIELDS="instanceid" REFTABLE="paypal" REFFIELDS="id"/>
       </KEYS>
     </TABLE>
   </TABLES>
