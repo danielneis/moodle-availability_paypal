@@ -42,7 +42,7 @@ M.availability_paypal.form.getNode = function(json) {
 
                 '<div><label>' +
                  M.util.get_string('cost', 'availability_paypal') +
-                '<input name="cost" type="text" /></label></div>' +
+                '<input name="cost" type="float" /></label></div>' +
 
                 '<div><label>' +
                  M.util.get_string('itemname', 'availability_paypal') +
@@ -74,11 +74,15 @@ M.availability_paypal.form.getNode = function(json) {
         M.availability_paypal.form.addedEvents = true;
         var root = Y.one('#fitem_id_availabilityconditionsjson');
         root.delegate('change', function() {
+            // For the grade item, just update the form fields.
+            M.core_availability.form.update();
+        }, '.availability_paypal select[name=currency]');
+        root.delegate('valuechange', function() {
                 // The key point is this update call. This call will update
                 // the JSON data in the hidden field in the form, so that it
                 // includes the new value of the checkbox.
                 M.core_availability.form.update();
-                }, '.availability_paypal input');
+        }, '.availability_paypal input');
     }
 
     return node;
@@ -90,31 +94,33 @@ M.availability_paypal.form.fillValue = function(value, node) {
     // to use within the JSON data in the form. Should be compatible
     // with the structure used in the __construct and save functions
     // within condition.php.
-    var businessemailinput = node.one('input[name=businessemail]');
-    value.businessemail = businessemailinput.get('value');
+    value.businessemail = node.one('input[name=businessemail]').get('value');
 
-    var currencyinput = node.one('select[name=currency]');
-    value.currency = currencyinput.get('value');
+    value.currency = node.one('select[name=currency]').get('value');
 
-    var costinput = node.one('input[name=cost]');
-    value.cost = costinput.get('value');
+    value.cost = node.one('input[name=cost]').get('value');
 
-    var itemnameinput = node.one('input[name=itemname]');
-    value.itemname = itemnameinput.get('value');
+    value.itemname = node.one('input[name=itemname]').get('value');
 
-    var itemnumberinput = node.one('input[name=itemnumber]');
-    value.itemnumber = itemnumberinput.get('value');
+    value.itemnumber = node.one('input[name=itemnumber]').get('value');
 };
 
-M.availability_completion.form.fillErrors = function(errors, node) {
- 
-    if (!node.one('input[name=businessemail]').get('value')) {
-        // ...but this is how you would add one if required. This is
-        // passing your component name (availability_paypal) and the
-        // name of a string within your lang file (error_message)
-        // which will be shown if they submit the form.
-        
+M.availability_paypal.form.fillErrors = function(errors, node) {
+    var value = {};
+    this.fillValue(value, node);
+
+    if (value.businessemail === '') {
         errors.push('availability_paypal:error_businessemail');
+    }
+    var cost = parseFloat(value.cost);
+    if ((cost !== undefined && typeof(cost) === 'string') || cost <= 0 ) {
+        errors.push('availability_paypal:error_cost');
+    }
+    if (value.itemname === '') {
+        errors.push('availability_paypal:error_itemname');
+    }
+    if (value.itemnumber === '') {
+        errors.push('availability_paypal:error_itemnumber');
     }
 };
 
