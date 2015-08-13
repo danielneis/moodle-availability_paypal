@@ -1,4 +1,5 @@
 <?php
+
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -63,7 +64,12 @@ $event->add_record_snapshot($PAGE->cm->modname, $paypal);
 $event->trigger();
 */
 
-// Print the page header.
+if ($paymenttnx = $DB->get_record('paypal_transactions', array('userid' => $USER->id, 'contextid' => $contextid))) {
+
+    if ($paymenttnx->payment_status == 'Completed') {
+        redirect($context->get_url(), get_string('paymentcompleted', 'availability_paypal'));
+    }
+}
 
 $PAGE->set_url('/availability/condition/paypal/view.php', array('contextid' => $contextid));
 $PAGE->set_title(format_string($paypal->itemname));
@@ -71,24 +77,12 @@ $PAGE->set_heading(format_string($paypal->itemnumber));
 
 $PAGE->navbar->add($paypal->itemname);
 
-// Output starts here.
 echo $OUTPUT->header();
 
-// Replace the following lines with you own code.
 echo $OUTPUT->heading($paypal->itemname);
 
-// Conditions to show the intro can change to look for own settings or whatever.
-if ($paymenttnx = $DB->get_record('paypal_transactions',
-                                   array('userid' => $USER->id,
-                                         'contextid' => $contextid))) {
-
-    if ($paymenttnx->payment_status == 'Completed') {
-        // should double-check with paypal everytime ?
-        echo get_string('paymentcompleted', 'availability_paypal');
-    } else if ($paymenttnx->payment_status == 'Pending') {
-        echo get_string('paymentpending', 'availability_paypal');
-    }
-
+if ($paymenttnx && ($paymenttnx->payment_status == 'Pending')) {
+    echo get_string('paymentpending', 'availability_paypal');
 } else {
 
     // Calculate localised and "." cost, make sure we send PayPal the same value,
