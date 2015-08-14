@@ -45,7 +45,7 @@ M.availability_paypal.form.getNode = function(json) {
 
                 '<div><label>' +
                  M.util.get_string('cost', 'availability_paypal') +
-                '<input name="cost" type="number" /></label></div>' +
+                '<input name="cost" type="text" /></label></div>' +
 
                 '<div><label>' +
                  M.util.get_string('itemname', 'availability_paypal') +
@@ -100,11 +100,32 @@ M.availability_paypal.form.fillValue = function(value, node) {
 
     value.currency = node.one('select[name=currency]').get('value');
 
-    value.cost = node.one('input[name=cost]').get('value');
+    value.cost = this.getValue('cost', node);
 
     value.itemname = node.one('input[name=itemname]').get('value');
 
     value.itemnumber = node.one('input[name=itemnumber]').get('value');
+};
+
+/**
+ * Gets the numeric value of an input field. Supports decimal points (using
+ * dot or comma).
+ *
+ * @method getValue
+ * @return {Number|String} Value of field as number or string if not valid
+ */
+M.availability_paypal.form.getValue = function(field, node) {
+    // Get field value.
+    var value = node.one('input[name=' + field + ']').get('value');
+
+    // If it is not a valid positive number, return false.
+    if (!(/^[0-9]+([.,][0-9]+)?$/.test(value))) {
+        return value;
+    }
+
+    // Replace comma with dot and parse as floating-point.
+    var result = parseFloat(value.replace(',', '.'));
+    return result;
 };
 
 M.availability_paypal.form.fillErrors = function(errors, node) {
@@ -114,8 +135,7 @@ M.availability_paypal.form.fillErrors = function(errors, node) {
     if (value.businessemail === '') {
         errors.push('availability_paypal:error_businessemail');
     }
-    var cost = parseFloat(value.cost);
-    if ((cost !== undefined && typeof(cost) === 'string') || cost <= 0 ) {
+    if ((value.cost !== undefined && typeof(value.cost) === 'string') || value.cost <= 0 ) {
         errors.push('availability_paypal:error_cost');
     }
     if (value.itemname === '') {
