@@ -18,6 +18,7 @@
  * Front-end class.
  *
  * @package availability_paypal
+ * @copyright 2015 Daniel Neis
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -29,20 +30,30 @@ defined('MOODLE_INTERNAL') || die();
  * Front-end class.
  *
  * @package availability_paypal
+ * @copyright 2015 Daniel Neis
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class frontend extends \core_availability\frontend {
 
     protected function get_javascript_strings() {
-        $strings = array(
-            'AUD', 'BRL', 'CAD', 'CHF', 'CZK', 'DKK', 'EUR', 'GBP', 'HKD', 'HUF', 'ILS', 'JPY',
-            'MXN', 'MYR', 'NOK', 'NZD', 'PHP', 'PLN', 'RUB', 'SEK', 'SGD', 'THB', 'TRY', 'TWD', 'USD',
-            'ajaxerror', 'businessemail', 'currency', 'cost', 'itemname', 'itemnumber');
-        return $strings;
+        return array('ajaxerror', 'businessemail', 'currency', 'cost', 'itemname', 'itemnumber');
     }
 
-    protected function allow_add($course, \cm_info $cm = null,
-            \section_info $section = null) {
+    protected function allow_add($course, \cm_info $cm = null, \section_info $section = null) {
         return true;
+    }
+
+    /**
+     * Gets additional parameters for the plugin's initInner function.
+     *
+     * Default returns no parameters.
+     *
+     * @param \stdClass $course Course object
+     * @param \cm_info $cm Course-module currently being edited (null if none)
+     * @param \section_info $section Section currently being edited (null if none)
+     * @return array Array of parameters for the JavaScript function
+     */
+    protected function get_javascript_init_params($course, \cm_info $cm = null, \section_info $section = null) {
+        return array(\get_string_manager()->get_list_of_currencies());
     }
 }

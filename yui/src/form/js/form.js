@@ -11,24 +11,29 @@ M.availability_paypal = M.availability_paypal || {};
  */
 M.availability_paypal.form = Y.Object(M.core_availability.plugin);
 
+/**
+ * Initialises this plugin.
+ *
+ * @method initInner
+ * @param {Array} currencies Array of currency_code => localised string
+ */
+M.availability_paypal.form.initInner = function(currencies) {
+    this.currencies = currencies;
+};
+
 M.availability_paypal.form.getNode = function(json) {
-    // See https://www.paypal.com/cgi-bin/webscr?cmd=p/sell/mc/mc_intro-outside,
-    // 3-character ISO-4217:
-    // https://cms.paypal.com/us/cgi-bin/?cmd=_render-content&content_ID=developer/e_howto_api_currency_codes
-    var codes = ['AUD', 'BRL', 'CAD', 'CHF', 'CZK', 'DKK', 'EUR', 'GBP', 'HKD', 'HUF', 'ILS', 'JPY',
-                 'MXN', 'MYR', 'NOK', 'NZD', 'PHP', 'PLN', 'RUB', 'SEK', 'SGD', 'THB', 'TRY', 'TWD', 'USD'];
-    var currencies_options = '';
     var selected_string = '';
-    codes.forEach(function(c) {
-        if (json.currency && json.currency == c) {
+    var currencies_options = '';
+    for (var curr in this.currencies) {
+        if (json.currency === curr) {
             selected_string = ' selected="selected" ';
         } else {
             selected_string = '';
         }
-        currencies_options += '<option value="'+c+'" '+selected_string+' >' +
-                                M.util.get_string(c, 'availability_paypal') +
+        currencies_options += '<option value="'+curr+'" '+selected_string+' >' +
+                                this.currencies[curr] +
                               '</option>';
-    });
+    }
 
     var html = '<div><label>' +
                 M.util.get_string('businessemail', 'availability_paypal') +
@@ -36,11 +41,11 @@ M.availability_paypal.form.getNode = function(json) {
               
                 '<div><label>' +
                  M.util.get_string('currency', 'availability_paypal') +
-                '<select name="currency" type="text" />'+currencies_options+'</select></label></div>' +
+                '<select name="currency" />'+currencies_options+'</select></label></div>' +
 
                 '<div><label>' +
                  M.util.get_string('cost', 'availability_paypal') +
-                '<input name="cost" type="float" /></label></div>' +
+                '<input name="cost" type="number" /></label></div>' +
 
                 '<div><label>' +
                  M.util.get_string('itemname', 'availability_paypal') +
@@ -72,7 +77,6 @@ M.availability_paypal.form.getNode = function(json) {
         M.availability_paypal.form.addedEvents = true;
         var root = Y.one('#fitem_id_availabilityconditionsjson');
         root.delegate('change', function() {
-            // For the grade item, just update the form fields.
             M.core_availability.form.update();
         }, '.availability_paypal select[name=currency]');
         root.delegate('valuechange', function() {
