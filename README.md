@@ -1,4 +1,5 @@
-# moodle-availability_paypal
+# PayPal Availability Condition for Moodle
+
 An Availability Condition for Moodle to require a PayPal payment to access activities and resources.
 
 For each restriction you add, you can set a business email address, cost, currency, item name and item number.
