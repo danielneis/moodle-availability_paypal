@@ -119,7 +119,7 @@ $options = array(
 $location = "https://{$paypaladdr}/cgi-bin/webscr";
 $result = $c->post($location, $req, $options);
 
-if (!$result) {  /// Could not connect to PayPal - FAIL.
+if (!$result) {  // Could not connect to PayPal - FAIL.
     echo "<p>Error: could not access paypal.com</p>";
     paypal_message_error_to_admin("Could not access paypal.com to verify payment", $data);
     die;

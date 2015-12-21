@@ -38,7 +38,7 @@ if ($context instanceof context_module) {
     $availability = json_decode($availability);
     foreach ($availability->c as $condition) {
         if ($condition->type == 'paypal') {
-            // TODO: handle more than one paypal for this context
+            // TODO: handle more than one paypal for this context.
             $paypal = $condition;
             break;
         } else {
@@ -90,12 +90,11 @@ if ($paymenttnx && ($paymenttnx->payment_status == 'Pending')) {
     $localisedcost = format_float($paypal->cost, 2, true);
     $cost = format_float($paypal->cost, 2, false);
 
-    if (isguestuser()) { // force login only for guest user, not real users with guest role
+    if (isguestuser()) { // Force login only for guest user, not real users with guest role.
         if (empty($CFG->loginhttps)) {
             $wwwroot = $CFG->wwwroot;
         } else {
-            // This actually is not so secure ;-), 'cause we're
-            // in unencrypted connection...
+            // This actually is not so secure ;-), 'cause we're in unencrypted connection...
             $wwwroot = str_replace("http://", "https://", $CFG->wwwroot);
         }
         echo '<div class="mdl-align"><p>'.get_string('paymentrequired', 'availability_paypal').'</p>';
@@ -118,9 +117,11 @@ if ($paymenttnx && ($paymenttnx->payment_status == 'Pending')) {
         src="https://www.paypal.com/en_US/i/logo/PayPal_mark_60x38.gif" /></p>
         <p><?php print_string("paymentinstant", 'availability_paypal') ?></p>
         <?php
-            $paypalurl = empty($CFG->usepaypalsandbox)
-                         ? 'https://www.paypal.com/cgi-bin/webscr'
-                         : 'https://www.sandbox.paypal.com/cgi-bin/webscr';
+        if (empty($CFG->usepaypalsandbox)) {
+            $paypalurl = 'https://www.paypal.com/cgi-bin/webscr';
+        } else {
+            $paypalurl = 'https://www.sandbox.paypal.com/cgi-bin/webscr';
+        }
         ?>
         <form action="<?php echo $paypalurl ?>" method="post">
 
