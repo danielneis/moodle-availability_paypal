@@ -51,7 +51,7 @@ class condition extends \core_availability\condition {
             $this->cost = $structure->cost;
         }
         if (isset($structure->itemname)) {
-            $this->itemname= $structure->itemname;
+            $this->itemname = $structure->itemname;
         }
         if (isset($structure->itemnumber)) {
             $this->itemnumber = $structure->itemnumber;
@@ -70,7 +70,7 @@ class condition extends \core_availability\condition {
             $result->cost = $this->cost;
         }
         if ($this->itemname) {
-            $result->itemname= $this->itemname;
+            $result->itemname = $this->itemname;
         }
         if ($this->itemnumber) {
             $result->itemnumber = $this->itemnumber;
@@ -92,7 +92,7 @@ class condition extends \core_availability\condition {
 
     public function is_available($not, \core_availability\info $info, $grabthelot, $userid) {
         global $DB;
-        // should double-check with paypal everytime ?
+        // Should double-check with paypal everytime ?
         $context = $info->get_context();
         return $DB->record_exists('paypal_transactions',
                                   array('userid' => $userid,

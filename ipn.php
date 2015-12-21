@@ -95,7 +95,7 @@ if ($context instanceof context_module) {
     $availability = json_decode($availability);
     foreach ($availability->c as $condition) {
         if ($condition->type == 'paypal') {
-            // TODO: handle more than one paypal for this context
+            // TODO: handle more than one paypal for this context.
             $paypal = $condition;
             break;
         } else {
@@ -103,10 +103,11 @@ if ($context instanceof context_module) {
         }
     }
 } else {
-    //TODO: handle sections
+    // TODO: handle sections.
+    print_error('support to sections not yet implemented.');
 }
 
-// Open a connection back to PayPal to validate the data
+// Open a connection back to PayPal to validate the data.
 $paypaladdr = empty($CFG->usepaypalsandbox) ? 'www.paypal.com' : 'www.sandbox.paypal.com';
 $c = new curl();
 $options = array(
@@ -118,7 +119,7 @@ $options = array(
 $location = "https://{$paypaladdr}/cgi-bin/webscr";
 $result = $c->post($location, $req, $options);
 
-if (!$result) {  /// Could not connect to PayPal - FAIL
+if (!$result) {  /// Could not connect to PayPal - FAIL.
     echo "<p>Error: could not access paypal.com</p>";
     paypal_message_error_to_admin("Could not access paypal.com to verify payment", $data);
     die;
@@ -174,7 +175,7 @@ if (strlen($result) > 0) {
         // At this point we only proceed with a status of completed or pending with a reason of echeck.
 
         // Make sure this transaction doesn't exist already.
-        if ($existing = $DB->get_record("paypal_transactions", array("txn_id"=>$data->txn_id))) {
+        if ($existing = $DB->get_record("paypal_transactions", array("txn_id" => $data->txn_id))) {
             paypal_message_error_to_admin("Transaction $data->txn_id is being repeated!", $data);
             die;
         }
@@ -287,7 +288,7 @@ if (strlen($result) > 0) {
         }
         */
 
-    } else if (strcmp ($result, "INVALID") == 0) { // ERROR
+    } else if (strcmp ($result, "INVALID") == 0) { // ERROR.
         $DB->insert_record("paypal_transactions", $data, false);
         paypal_message_error_to_admin("Received an invalid payment notification!! (Fake payment?)", $data);
     }
@@ -329,7 +330,6 @@ function availability_paypal_ipn_exception_handler($ex) {
     if (debugging('', DEBUG_NORMAL)) {
         $logerrmsg .= ' Debug: '.$info->debuginfo."\n".format_backtrace($info->backtrace, true);
     }
-    error_log($logerrmsg);
-
+    mtrace($logerrmsg);
     exit(0);
 }

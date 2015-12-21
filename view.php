@@ -1,5 +1,4 @@
 <?php
-
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -30,7 +29,7 @@
 
 require_once('../../../config.php');
 
-$contextid = required_param('contextid', PARAM_INT); // Course module ID
+$contextid = required_param('contextid', PARAM_INT);
 
 $context = context::instance_by_id($contextid);
 $instanceid = $context->__get('instanceid');
@@ -43,11 +42,12 @@ if ($context instanceof context_module) {
             $paypal = $condition;
             break;
         } else {
-            // TODO: no paypal for this context
+            print_error('no paypal condition for this context.');
         }
     }
 } else {
-    //TODO: handle sections
+    // TODO: handle sections.
+    print_error('support to sections not yet implemented.');
 }
 $coursecontext = $context->get_course_context();
 $course = $DB->get_record('course', array('id' => $coursecontext->__get('instanceid')));
@@ -104,7 +104,7 @@ if ($paymenttnx && ($paymenttnx->payment_status == 'Pending')) {
         echo '<p><a href="'.$wwwroot.'/login/">'.get_string('loginsite').'</a></p>';
         echo '</div>';
     } else {
-        //Sanitise some fields before building the PayPal form
+        // Sanitise some fields before building the PayPal form
         $userfullname    = fullname($USER);
         $userfirstname   = $USER->firstname;
         $userlastname    = $USER->lastname;
@@ -118,7 +118,9 @@ if ($paymenttnx && ($paymenttnx->payment_status == 'Pending')) {
         src="https://www.paypal.com/en_US/i/logo/PayPal_mark_60x38.gif" /></p>
         <p><?php print_string("paymentinstant", 'availability_paypal') ?></p>
         <?php
-            $paypalurl = empty($CFG->usepaypalsandbox) ? 'https://www.paypal.com/cgi-bin/webscr' : 'https://www.sandbox.paypal.com/cgi-bin/webscr';
+            $paypalurl = empty($CFG->usepaypalsandbox)
+                         ? 'https://www.paypal.com/cgi-bin/webscr'
+                         : 'https://www.sandbox.paypal.com/cgi-bin/webscr';
         ?>
         <form action="<?php echo $paypalurl ?>" method="post">
 
