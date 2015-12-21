@@ -32,30 +32,31 @@ M.availability_paypal.form.getNode = function(json) {
         } else {
             selected_string = '';
         }
-        currencies_options += '<option value="'+curr+'" '+selected_string+' >' +
-                                this.currencies[curr] +
-                              '</option>';
+        currencies_options += '<option value="' + curr + '" ' + selected_string + ' >';
+        currencies_options += this.currencies[curr];
+        currencies_options += '</option>';
     }
 
-    var html = '<div><label>' +
-                M.util.get_string('businessemail', 'availability_paypal') +
-               '<input name="businessemail" type="email" /></label></div>' +
-              
-                '<div><label>' +
-                 M.util.get_string('currency', 'availability_paypal') +
-                '<select name="currency" />'+currencies_options+'</select></label></div>' +
+    var html = '<div><label>';
+    html += M.util.get_string('businessemail', 'availability_paypal');
+    html += '<input name="businessemail" type="email" /></label></div>';
 
-                '<div><label>' +
-                 M.util.get_string('cost', 'availability_paypal') +
-                '<input name="cost" type="text" /></label></div>' +
+    html += '<div><label>';
+    html += M.util.get_string('currency', 'availability_paypal');
+    html += '<select name="currency" />' + currencies_options + '</select></label></div>';
 
-                '<div><label>' +
-                 M.util.get_string('itemname', 'availability_paypal') +
-                '<input name="itemname" type="text" /></label></div>' +
+    html += '<div><label>';
+    html += M.util.get_string('cost', 'availability_paypal');
+    html += '<input name="cost" type="text" /></label></div>';
 
-                '<div><label>' +
-                 M.util.get_string('itemnumber', 'availability_paypal') +
-                '<input name="itemnumber" type="text" /></label></div>' ;
+    html += '<div><label>';
+    html += M.util.get_string('itemname', 'availability_paypal');
+    html += '<input name="itemname" type="text" /></label></div>';
+
+    html += '<div><label>';
+    html += M.util.get_string('itemnumber', 'availability_paypal');
+    html += '<input name="itemnumber" type="text" /></label></div>';
+
     var node = Y.Node.create('<span>' + html + '</span>');
 
     // Set initial values based on the value from the JSON data in Moodle

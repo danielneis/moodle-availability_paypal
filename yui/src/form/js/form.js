@@ -36,24 +36,24 @@ M.availability_paypal.form.getNode = function(json) {
     }
 
     var html = '<div><label>';
-        html +=  M.util.get_string('businessemail', 'availability_paypal');
-        html += '<input name="businessemail" type="email" /></label></div>';
+    html += M.util.get_string('businessemail', 'availability_paypal');
+    html += '<input name="businessemail" type="email" /></label></div>';
 
-        html += '<div><label>';
-        html +=  M.util.get_string('currency', 'availability_paypal');
-        html += '<select name="currency" />' + currencies_options + '</select></label></div>';
+    html += '<div><label>';
+    html += M.util.get_string('currency', 'availability_paypal');
+    html += '<select name="currency" />' + currencies_options + '</select></label></div>';
 
-        html += '<div><label>';
-        html +=  M.util.get_string('cost', 'availability_paypal');
-        html += '<input name="cost" type="text" /></label></div>';
+    html += '<div><label>';
+    html += M.util.get_string('cost', 'availability_paypal');
+    html += '<input name="cost" type="text" /></label></div>';
 
-        html += '<div><label>';
-        html +=  M.util.get_string('itemname', 'availability_paypal');
-        html += '<input name="itemname" type="text" /></label></div>';
+    html += '<div><label>';
+    html += M.util.get_string('itemname', 'availability_paypal');
+    html += '<input name="itemname" type="text" /></label></div>';
 
-        html += '<div><label>';
-        html +=  M.util.get_string('itemnumber', 'availability_paypal');
-        html += '<input name="itemnumber" type="text" /></label></div>';
+    html += '<div><label>';
+    html += M.util.get_string('itemnumber', 'availability_paypal');
+    html += '<input name="itemnumber" type="text" /></label></div>';
 
     var node = Y.Node.create('<span>' + html + '</span>');
 
