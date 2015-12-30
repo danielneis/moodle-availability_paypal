@@ -36,7 +36,6 @@ Feature: availability_paypal
     And I expand all fieldsets
     And I click on "Add restriction..." "button"
     And I click on "PayPal" "button" in the "Add restriction..." "dialogue"
-    And I click on ".availability-item .availability-eye img" "css_element"
     And I set the field "businessemail" to "test@example.com"
     And I set the field "cost" to "123"
     And I press "Save and return to course"
@@ -47,5 +46,7 @@ Feature: availability_paypal
     And I am on site homepage
     And I follow "Course 1"
 
-    # Page 1 should appear, but page 2 does not.
+    # Page 1 should appear.
     Then I should see "Page 1" in the "region-main" "region"
+    Then I should see "you make a" in the "#section-1 .availabilityinfo" "css_element"
+    And I should see "payment with PayPal" in the "#section-1 .availabilityinfo" "css_element"
