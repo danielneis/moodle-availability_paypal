@@ -46,7 +46,6 @@ Feature: availability_paypal
     And I am on site homepage
     And I follow "Course 1"
 
-    # Page 1 should appear.
-    Then I should see "Page 1" in the "region-main" "region"
+    # Page 1 should appear with availability info.
     Then I should see "you make a" in the "#section-1 .availabilityinfo" "css_element"
     And I should see "payment with PayPal" in the "#section-1 .availabilityinfo" "css_element"
