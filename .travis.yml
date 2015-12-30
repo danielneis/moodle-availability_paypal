@@ -40,3 +40,4 @@ script:
   - moodle-plugin-ci csslint
   - moodle-plugin-ci shifter
   - moodle-plugin-ci jshint
+  - moodle-plugin-ci behat
