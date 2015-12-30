@@ -47,5 +47,6 @@ Feature: availability_paypal
     And I follow "Course 1"
 
     # Page 1 should appear with availability info.
-    Then I should see "you make a" in the "#section-1 .availabilityinfo" "css_element"
-    And I should see "payment with PayPal" in the "#section-1 .availabilityinfo" "css_element"
+    Then I should see "Page 1" in the "#section-1 .dimmed_text" "css_element"
+    And I should see "you make a" in the "Topic 1" "section"
+    And I should see "payment with PayPal" in the "Topic 1" "section"
