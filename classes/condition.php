@@ -18,6 +18,7 @@
  * Date condition.
  *
  * @package availability_paypal
+ * @copyright 2015 Daniel Neis Araujo <danielneis@gmail.com>
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -84,6 +85,9 @@ class condition extends \core_availability\condition {
      * Intended for unit testing, as normally the JSON values are constructed
      * by JavaScript code.
      *
+     * @param string $businessemail The email of paypal to be credited
+     * @param string $currency      The currency to charge the user
+     * @param string $cost          The cost to charge the user
      * @return stdClass Object representing condition
      */
     public static function get_json($businessemail, $currency, $cost) {
@@ -109,6 +113,7 @@ class condition extends \core_availability\condition {
      *
      * @param bool $not True if NOT is in force
      * @param bool $standalone True to use standalone lang strings
+     * @param bool $info       Information about the availability condition and module context
      */
     protected function get_either_description($not, $standalone, $info) {
         $context = $info->get_context();

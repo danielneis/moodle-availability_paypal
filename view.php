@@ -20,8 +20,8 @@
  * You can have a rather longer description of the file as well,
  * if you like, and it can span multiple lines.
  *
- * @package    mod_paypal
- * @copyright  2015 Your Name
+ * @package availability_paypal
+ * @copyright  2015 Daniel Neis Araujo <danielneis@gmail.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -103,7 +103,7 @@ if ($paymenttnx && ($paymenttnx->payment_status == 'Pending')) {
         echo '<p><a href="'.$wwwroot.'/login/">'.get_string('loginsite').'</a></p>';
         echo '</div>';
     } else {
-        // Sanitise some fields before building the PayPal form
+        // Sanitise some fields before building the PayPal form.
         $userfullname    = fullname($USER);
         $userfirstname   = $USER->firstname;
         $userlastname    = $USER->lastname;

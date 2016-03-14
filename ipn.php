@@ -21,7 +21,7 @@
  * then double checks that data by sending it back to PayPal.
  * If PayPal verifies this then sets the activity as completed.
  *
- * @package    availabilitY_paypal
+ * @package    availability_paypal
  * @copyright  2010 Eugene Venter
  * @copyright  2015 Daniel Neis
  * @author     Eugene Venter - based on code by others
@@ -42,12 +42,11 @@ if (empty($_POST) or !empty($_GET)) {
     print_error("Sorry, you can not use the script that way.");
 }
 
-/**
- * Read all the data from PayPal and get it ready for later;
- * we expect only valid UTF-8 encoding, it is the responsibility
- * of user to set it up properly in PayPal business account,
- * it is documented in docs wiki.
- */
+
+// Read all the data from PayPal and get it ready for later;
+// we expect only valid UTF-8 encoding, it is the responsibility
+// of user to set it up properly in PayPal business account,
+// it is documented in docs wiki.
 $req = 'cmd=_notify-validate';
 
 foreach ($_POST as $key => $value) {
