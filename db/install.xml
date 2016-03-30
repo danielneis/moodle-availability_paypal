@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="mod/paypal/db" VERSION="20150624" COMMENT="XMLDB file for Moodle mod/paypal"
+<XMLDB PATH="availability/condition/paypal/db" VERSION="20150624" COMMENT="XMLDB file for Moodle availability/condition/paypal"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
 >
   <TABLES>
-    <TABLE NAME="paypal_transactions" COMMENT="Holds all known information about PayPal transactions">
+    <TABLE NAME="availability_paypal_transactions" COMMENT="Holds all known information about PayPal transactions">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
         <FIELD NAME="business" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false"/>

@@ -131,7 +131,7 @@ if (!$result) {  // Could not connect to PayPal - FAIL.
 if (strlen($result) > 0) {
     if (strcmp($result, "VERIFIED") == 0) {          // VALID PAYMENT!
 
-        $DB->insert_record("paypal_transactions", $data);
+        $DB->insert_record("availability_paypal_transactions", $data);
 
         // Check the payment_status and payment_reason.
 
@@ -174,7 +174,7 @@ if (strlen($result) > 0) {
         // At this point we only proceed with a status of completed or pending with a reason of echeck.
 
         // Make sure this transaction doesn't exist already.
-        if ($existing = $DB->get_record("paypal_transactions", array("txn_id" => $data->txn_id))) {
+        if ($existing = $DB->get_record("availability_paypal_transactions", array("txn_id" => $data->txn_id))) {
             paypal_message_error_to_admin("Transaction $data->txn_id is being repeated!", $data);
             die;
         }
@@ -288,7 +288,7 @@ if (strlen($result) > 0) {
         */
 
     } else if (strcmp ($result, "INVALID") == 0) { // ERROR.
-        $DB->insert_record("paypal_transactions", $data, false);
+        $DB->insert_record("availability_paypal_transactions", $data, false);
         paypal_message_error_to_admin("Received an invalid payment notification!! (Fake payment?)", $data);
     }
 }

@@ -64,7 +64,7 @@ $event->add_record_snapshot($PAGE->cm->modname, $paypal);
 $event->trigger();
 */
 
-if ($paymenttnx = $DB->get_record('paypal_transactions', array('userid' => $USER->id, 'contextid' => $contextid))) {
+if ($paymenttnx = $DB->get_record('availability_paypal_transactions', array('userid' => $USER->id, 'contextid' => $contextid))) {
 
     if ($paymenttnx->payment_status == 'Completed') {
         redirect($context->get_url(), get_string('paymentcompleted', 'availability_paypal'));

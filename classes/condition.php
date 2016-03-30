@@ -98,7 +98,7 @@ class condition extends \core_availability\condition {
         global $DB;
         // Should double-check with paypal everytime ?
         $context = $info->get_context();
-        return $DB->record_exists('paypal_transactions',
+        return $DB->record_exists('availability_paypal_transactions',
                                   array('userid' => $userid,
                                         'contextid' => $context->id,
                                         'payment_status' => 'Completed'));
