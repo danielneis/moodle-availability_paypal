@@ -20,7 +20,7 @@
  * You can have a rather longer description of the file as well,
  * if you like, and it can span multiple lines.
  *
- * @package availability_paypal
+ * @package    availability_paypal
  * @copyright  2015 Daniel Neis Araujo <danielneis@gmail.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -53,16 +53,6 @@ $coursecontext = $context->get_course_context();
 $course = $DB->get_record('course', array('id' => $coursecontext->__get('instanceid')));
 
 require_login($course);
-
-/*
-$event = \mod_paypal\event\course_module_viewed::create(array(
-    'objectid' => $PAGE->cm->instance,
-    'context' => $PAGE->context,
-));
-$event->add_record_snapshot('course', $PAGE->course);
-$event->add_record_snapshot($PAGE->cm->modname, $paypal);
-$event->trigger();
-*/
 
 if ($paymenttnx = $DB->get_record('availability_paypal_transactions', array('userid' => $USER->id, 'contextid' => $contextid))) {
 
