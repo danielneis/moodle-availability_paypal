@@ -25,14 +25,12 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-// Replace paypal with the name of your module and remove this line.
-
 require_once('../../../config.php');
 
 $contextid = required_param('contextid', PARAM_INT);
 
 $context = context::instance_by_id($contextid);
-$instanceid = $context->__get('instanceid');
+$instanceid = $context->instanceid;
 if ($context instanceof context_module) {
     $availability = $DB->get_field('course_modules', 'availability', array('id' => $instanceid), MUST_EXIST);
     $availability = json_decode($availability);
@@ -50,7 +48,7 @@ if ($context instanceof context_module) {
     print_error('support to sections not yet implemented.');
 }
 $coursecontext = $context->get_course_context();
-$course = $DB->get_record('course', array('id' => $coursecontext->__get('instanceid')));
+$course = $DB->get_record('course', array('id' => $coursecontext->instanceid));
 
 require_login($course);
 

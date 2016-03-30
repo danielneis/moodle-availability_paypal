@@ -88,7 +88,7 @@ if (! $context = context::instance_by_id($data->contextid, IGNORE_MISSING)) {
     die;
 }
 
-$instanceid = $context->__get('instanceid');
+$instanceid = $context->instanceid;
 if ($context instanceof context_module) {
     $availability = $DB->get_field('course_modules', 'availability', array('id' => $instanceid), MUST_EXIST);
     $availability = json_decode($availability);
