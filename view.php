@@ -62,8 +62,8 @@ if ($paymenttnx = $DB->get_record('availability_paypal_transactions', array('use
 }
 
 $PAGE->set_url('/availability/condition/paypal/view.php', array('contextid' => $contextid));
-$PAGE->set_title(format_string($paypal->itemname));
-$PAGE->set_heading(format_string($paypal->itemnumber));
+$PAGE->set_title($course->fullname);
+$PAGE->set_heading($course->fullname);
 
 $PAGE->navbar->add($paypal->itemname);
 
