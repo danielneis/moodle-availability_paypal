@@ -79,12 +79,12 @@ $data->contextid       = (int)$custom[1];
 $data->timeupdated      = time();
 
 if (! $user = $DB->get_record("user", array("id" => $data->userid))) {
-    paypal_message_error_to_admin("Not a valid user id", $data);
+    availability_paypal_message_error_to_admin("Not a valid user id", $data);
     die;
 }
 
 if (! $context = context::instance_by_id($data->contextid, IGNORE_MISSING)) {
-    paypal_message_error_to_admin("Not a valid context id", $data);
+    availability_paypal_message_error_to_admin("Not a valid context id", $data);
     die;
 }
 
@@ -98,7 +98,7 @@ if ($context instanceof context_module) {
             $paypal = $condition;
             break;
         } else {
-            paypal_message_error_to_admin("Not a valid context id", $data);
+            availability_paypal_message_error_to_admin("Not a valid context id", $data);
         }
     }
 } else {
@@ -120,7 +120,7 @@ $result = $c->post($location, $req, $options);
 
 if (!$result) {  // Could not connect to PayPal - FAIL.
     echo "<p>Error: could not access paypal.com</p>";
-    paypal_message_error_to_admin("Could not access paypal.com to verify payment", $data);
+    availability_paypal_message_error_to_admin("Could not access paypal.com to verify payment", $data);
     die;
 }
 
@@ -137,12 +137,12 @@ if (strlen($result) > 0) {
 
         // If status is not completed, just tell admin, transaction will be saved later.
         if ($data->payment_status != "Completed" and $data->payment_status != "Pending") {
-            paypal_message_error_to_admin("Status not completed or pending. User payment status updated", $data);
+            availability_paypal_message_error_to_admin("Status not completed or pending. User payment status updated", $data);
         }
 
         // If currency is incorrectly set then someone maybe trying to cheat the system.
         if ($data->payment_currency != $paypal->currency) {
-            paypal_message_error_to_admin("Currency does not match course settings, received: ".$data->payment_currency, $data);
+            availability_paypal_message_error_to_admin("Currency does not match course settings, received: ".$data->payment_currency, $data);
             die;
         }
 
@@ -175,26 +175,26 @@ if (strlen($result) > 0) {
 
         // Make sure this transaction doesn't exist already.
         if ($existing = $DB->get_record("availability_paypal_transactions", array("txn_id" => $data->txn_id))) {
-            paypal_message_error_to_admin("Transaction $data->txn_id is being repeated!", $data);
+            availability_paypal_message_error_to_admin("Transaction $data->txn_id is being repeated!", $data);
             die;
         }
 
         // Check that the email is the one we want it to be.
         if (core_text::strtolower($data->business) !== core_text::strtolower($paypal->businessemail)) {
-            paypal_message_error_to_admin("Business email is {$data->business} (not ".
+            availability_paypal_message_error_to_admin("Business email is {$data->business} (not ".
                                             $paypal->businessemail.")", $data);
             die;
         }
 
         // Check that user exists.
         if (!$user = $DB->get_record('user', array('id' => $data->userid))) {
-            paypal_message_error_to_admin("User {$data->userid} doesn't exist", $data);
+            availability_paypal_message_error_to_admin("User {$data->userid} doesn't exist", $data);
             die;
         }
 
         // Check that course exists.
         if (!$course = $DB->get_record('course', array('id' => $data->courseid))) {
-            paypal_message_error_to_admin("Course {$data->courseid} doesn't exist", $data);
+            availability_paypal_message_error_to_admin("Course {$data->courseid} doesn't exist", $data);
             die;
         }
 
@@ -211,7 +211,7 @@ if (strlen($result) > 0) {
         $cost = format_float($cost, 2, false);
 
         if ($data->payment_gross < $cost) {
-            paypal_message_error_to_admin("Amount paid is not enough ({$data->payment_gross} < {$cost}))", $data);
+            availability_paypal_message_error_to_admin("Amount paid is not enough ({$data->payment_gross} < {$cost}))", $data);
             die;
         }
 
@@ -289,11 +289,11 @@ if (strlen($result) > 0) {
 
     } else if (strcmp ($result, "INVALID") == 0) { // ERROR.
         $DB->insert_record("availability_paypal_transactions", $data, false);
-        paypal_message_error_to_admin("Received an invalid payment notification!! (Fake payment?)", $data);
+        availability_paypal_message_error_to_admin("Received an invalid payment notification!! (Fake payment?)", $data);
     }
 }
 
-function paypal_message_error_to_admin($subject, $data) {
+function availability_paypal_message_error_to_admin($subject, $data) {
     $admin = get_admin();
     $site = get_site();
 
