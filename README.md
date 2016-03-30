@@ -16,7 +16,7 @@ Install
 Usage
 -----
 
-This works like the [PayPal enrol plugin](https://docs.moodle.org/en/Paypal_enrolment), but instead of restricting the full course, you can restrict individual activities, resources or sections (and you can combine it with other availability conditions, for example, to exclude some group from paying using and "or" restriction set).
+This works like the [PayPal enrol plugin](https://docs.moodle.org/en/Paypal_enrolment), but instead of restricting the full course, you can restrict individual activities, resources or sections (and you can combine it with other availability conditions, for example, to exclude some group from paying using an "or" restriction set).
 
 For each restriction you add, you can set a business email address, cost, currency, item name and item number.
 
