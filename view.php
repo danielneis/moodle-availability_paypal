@@ -52,7 +52,7 @@ $course = $DB->get_record('course', array('id' => $coursecontext->instanceid));
 
 require_login($course);
 
-if ($paymenttnx = $DB->get_record('availability_paypal_transactions', array('userid' => $USER->id, 'contextid' => $contextid))) {
+if ($paymenttnx = $DB->get_record('availability_paypal_tnx', array('userid' => $USER->id, 'contextid' => $contextid))) {
 
     if ($paymenttnx->payment_status == 'Completed') {
         redirect($context->get_url(), get_string('paymentcompleted', 'availability_paypal'));
