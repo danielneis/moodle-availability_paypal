@@ -3,6 +3,8 @@ PayPal Availability Condition for Moodle
 
 With this plugins, you can put a price in any course content and ask for a PayPal payment to allow access.
 
+It works only with "course modules", the support to "sections" or "topics" is not yet implemented.
+
 Install
 -------
 
