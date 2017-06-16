@@ -37,6 +37,7 @@ $string['itemname'] = 'Item name';
 $string['itemname_help'] = 'Name of the item to be shown on PayPal form';
 $string['itemnumber'] = 'Item number';
 $string['itemname_help'] = 'Number of the item to be shown on PayPal form';
+$string['notdescription'] = 'you have not sent a <a href="{$a}">payment with PayPal</a>';
 $string['paymentcompleted'] = 'Your payment was accepted and now you can access the activity or resource. Thank you.';
 $string['paymentinstant'] = 'Use the button below to pay and access the activity or resource.';
 $string['paymentpending'] = 'There is a pending payment registered for you.';

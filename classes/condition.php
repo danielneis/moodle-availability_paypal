@@ -122,7 +122,11 @@ class condition extends \core_availability\condition {
     protected function get_either_description($not, $standalone, $info) {
         $context = $info->get_context();
         $url = new \moodle_url('/availability/condition/paypal/view.php?contextid='.$context->id);
-        return get_string('eitherdescription', 'availability_paypal', $url->out());
+        if ($not) {
+          return get_string('notdescription', 'availability_paypal', $url->out());
+        } else {
+          return get_string('eitherdescription', 'availability_paypal', $url->out());
+        }
     }
 
     public function update_after_restore($restoreid, $courseid, \base_logger $logger, $name) {
