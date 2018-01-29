@@ -14,6 +14,8 @@ Install
  * or download the latest version from https://github.com/danielneis/moodle-availability_paypal/archive/master.zip
 * Log in your Moodle as Admin and go to "Notifications" page
 * Follow the instructions to install the plugin
+* You must activate the IPN at your PayPal account
+* You must also use HTTPS on your Moodle site
 
 Usage
 -----
