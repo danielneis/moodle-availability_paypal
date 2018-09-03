@@ -2,8 +2,10 @@ PayPal Availability Condition for Moodle
 ----------------------------------------
 
 With this plugins, you can put a price in any course content and ask for a PayPal payment to allow access.
+The person in charge to configure the enrolment method on the course will be able to configure the enrolment cost's value and currency.
+The user will be able to pay in some other currency at PayPal website. The conversion rates will be calculated and applied by PayPal.
 
-It works only with "course modules", the support to "sections" or "topics" is not yet implemented.
+It works only with "course modules and resources". The support to "course sections" or "topics" is not yet implemented.
 
 Install
 -------
