@@ -74,15 +74,16 @@ M.availability_paypal.form.getNode = function(json) {
         node.one('input[name=itemnumber]').set('value', json.itemnumber);
     }
 
-    // Add event handlers (first time only). You can do this any way you
-    // like, but this pattern is used by the existing code.
+    // Add event handlers (first time only).
     if (!M.availability_paypal.form.addedEvents) {
         M.availability_paypal.form.addedEvents = true;
-        var root = Y.one('#fitem_id_availabilityconditionsjson');
+
+        var root = Y.one('.availability-field');
         root.delegate('change', function() {
             M.core_availability.form.update();
         }, '.availability_paypal select[name=currency]');
-        root.delegate('valuechange', function() {
+
+        root.delegate('change', function() {
                 // The key point is this update call. This call will update
                 // the JSON data in the hidden field in the form, so that it
                 // includes the new value of the checkbox.
