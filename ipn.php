@@ -297,7 +297,7 @@ if (strlen($result) > 0) {
  * Sends message to admin about error
  *
  * @param string $subject
- * @param string $data
+ * @param stdClass $data
  */
 function availability_paypal_message_error_to_admin($subject, $data) {
     $admin = get_admin();

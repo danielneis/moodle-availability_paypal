@@ -47,6 +47,9 @@ class frontend extends \core_availability\frontend {
     /**
      * Return true always - should be if user can add the condition
      *
+     * @param stdClass $course
+     * @param \cm_info $cm
+     * @param \section_info $section
      * @return bool
      */
     protected function allow_add($course, \cm_info $cm = null, \section_info $section = null) {

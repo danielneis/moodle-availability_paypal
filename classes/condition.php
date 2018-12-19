@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Date condition.
+ * PayPayl condition.
  *
  * @package availability_paypal
  * @copyright 2015 Daniel Neis Araujo <danielneis@gmail.com>
@@ -27,7 +27,7 @@ namespace availability_paypal;
 defined('MOODLE_INTERNAL') || die();
 
 /**
- * paypal condition.
+ * PayPal condition.
  *
  * @package availability_paypal
  * @copyright 2014 The Open University
@@ -101,7 +101,13 @@ class condition extends \core_availability\condition {
     /**
      * Returns true if the user can access the context, false otherwise
      *
-     * @return bool
+     * @param bool $not Set true if we are inverting the condition
+     * @param info $info Item we're checking
+     * @param bool $grabthelot Performance hint: if true, caches information
+     *   required for all course-modules, to make the front page and similar
+     *   pages work more quickly (works only for current user)
+     * @param int $userid User ID to check availability for
+     * @return bool True if available
      */
     public function is_available($not, \core_availability\info $info, $grabthelot, $userid) {
         global $DB;
@@ -123,7 +129,7 @@ class condition extends \core_availability\condition {
      *
      * @param bool $full Set true if this is the 'full information' view
      * @param bool $not  True if NOT is in force
-     * @param bool $info Information about the availability condition and module context
+     * @param \core_availability\info $info Information about the availability condition and module context
      * @return string    The string about the condition and it's status
      */
     public function get_description($full, $not, \core_availability\info $info) {
