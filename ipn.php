@@ -29,7 +29,10 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+// This file do not require login because paypal service will use to confirm transactions.
+// @codingStandardsIgnoreLine
 require("../../../config.php");
+
 require_once($CFG->libdir.'/eventslib.php');
 require_once($CFG->libdir . '/filelib.php');
 
@@ -41,7 +44,6 @@ set_exception_handler('availability_paypal_ipn_exception_handler');
 if (empty($_POST) or !empty($_GET)) {
     print_error("Sorry, you can not use the script that way.");
 }
-
 
 // Read all the data from PayPal and get it ready for later;
 // we expect only valid UTF-8 encoding, it is the responsibility
@@ -142,7 +144,8 @@ if (strlen($result) > 0) {
 
         // If currency is incorrectly set then someone maybe trying to cheat the system.
         if ($data->payment_currency != $paypal->currency) {
-            availability_paypal_message_error_to_admin("Currency does not match course settings, received: ".$data->payment_currency, $data);
+            $str = "Currency does not match course settings, received: " . $data->payment_currency;
+            availability_paypal_message_error_to_admin($str, $data);
             die;
         }
 
@@ -225,67 +228,6 @@ if (strlen($result) > 0) {
         } else {
             $teacher = false;
         }
-
-        /*
-        $mailstudents = $paypal->mailstudents;
-        $mailteachers = $paypal->mailteachers;
-        $mailadmins   = $paypal->mailadmins;
-        $shortname = format_string($course->shortname, true, array('context' => $context));
-
-        if (!empty($mailstudents)) {
-            $a = new stdClass();
-            $a->coursename = format_string($course->fullname, true, array('context' => $coursecontext));
-            $a->profileurl = "$CFG->wwwroot/user/view.php?id=$user->id";
-
-            $eventdata = new \core\message\message();
-            $eventdata->component         = 'availability_paypal';
-            $eventdata->name              = 'payment_completed';
-            $eventdata->userfrom          = empty($teacher) ? core_user::get_support_user() : $teacher;
-            $eventdata->userto            = $user;
-            $eventdata->subject           = get_string("paypalpaymentcompletedsubject", 'paypal');
-            $eventdata->fullmessage       = get_string('paypalpaymentcompletedmessage', 'paypal');
-            $eventdata->fullmessageformat = FORMAT_PLAIN;
-            $eventdata->fullmessagehtml   = '';
-            $eventdata->smallmessage      = '';
-            message_send($eventdata);
-        }
-
-        if (!empty($mailteachers) && !empty($teacher)) {
-            $a->course = format_string($course->fullname, true, array('context' => $coursecontext));
-            $a->user = fullname($user);
-
-            $eventdata = new \core\message\message();
-            $eventdata->component         = 'availability_paypal';
-            $eventdata->name              = 'payment_completed';
-            $eventdata->userfrom          = $user;
-            $eventdata->userto            = $teacher;
-            $eventdata->subject           = get_string("paypalpaymentcompletedsubject", 'paypal');
-            $eventdata->fullmessage       = get_string('paypalpaymentcompletedmessage', 'paypal');
-            $eventdata->fullmessageformat = FORMAT_PLAIN;
-            $eventdata->fullmessagehtml   = '';
-            $eventdata->smallmessage      = '';
-            message_send($eventdata);
-        }
-
-        if (!empty($mailadmins)) {
-            $a->course = format_string($course->fullname, true, array('context' => $coursecontext));
-            $a->user = fullname($user);
-            $admins = get_admins();
-            foreach ($admins as $admin) {
-                $eventdata = new \core\message\message();
-                $eventdata->component         = 'availability_paypal';
-                $eventdata->name              = 'payment_completed';
-                $eventdata->userfrom          = $user;
-                $eventdata->userto            = $admin;
-                $eventdata->subject           = get_string("paypalpaymentcompletedsubject", 'paypal');
-                $eventdata->fullmessage       = get_string('paypalpaymentcompletedmessage', 'paypal');
-                $eventdata->fullmessageformat = FORMAT_PLAIN;
-                $eventdata->fullmessagehtml   = '';
-                $eventdata->smallmessage      = '';
-                message_send($eventdata);
-            }
-        }
-        */
 
     } else if (strcmp ($result, "INVALID") == 0) { // ERROR.
         $DB->insert_record("availability_paypal_tnx", $data, false);

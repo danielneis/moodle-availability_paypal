@@ -130,8 +130,9 @@ if ($paymenttnx && ($paymenttnx->payment_status == 'Pending')) {
             <input type="hidden" name="no_note" value="1" />
             <input type="hidden" name="no_shipping" value="1" />
             <input type="hidden" name="notify_url" value="<?php echo "{$CFG->wwwroot}/availability/condition/paypal/ipn.php" ?>" />
-            <input type="hidden" name="return" value="<?php echo "{$CFG->wwwroot}/availability/condition/paypal/view.php?contextid={$contextid}" ?>" />
-            <input type="hidden" name="cancel_return" value="<?php echo "{$CFG->wwwroot}/availability/condition/paypal/view.php?contextid={$contextid}" ?>" />
+            <?php $returnurl = $CFG->wwwroot . '/availability/condition/paypal/view.php?contextid=' . $contextid; ?>
+            <input type="hidden" name="return" value="<?php echo $returnurl ?>" />
+            <input type="hidden" name="cancel_return" value="<?php echo $returnurl"" ?>" />
             <input type="hidden" name="rm" value="2" />
             <input type="hidden" name="cbt" value="<?php print_string("continue", 'availability_paypal') ?>" />
 
