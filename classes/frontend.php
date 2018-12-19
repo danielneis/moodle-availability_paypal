@@ -35,10 +35,20 @@ defined('MOODLE_INTERNAL') || die();
  */
 class frontend extends \core_availability\frontend {
 
+    /**
+     * Return list if string indexes used by javascript
+     *
+     * @return array
+     */
     protected function get_javascript_strings() {
         return array('ajaxerror', 'businessemail', 'currency', 'cost', 'itemname', 'itemnumber');
     }
 
+    /**
+     * Return true always - should be if user can add the condition
+     *
+     * @return bool
+     */
     protected function allow_add($course, \cm_info $cm = null, \section_info $section = null) {
         return true;
     }

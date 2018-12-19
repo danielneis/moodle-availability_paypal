@@ -24,8 +24,8 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version = 2018121900;
+$plugin->version = 2018121901;
 $plugin->requires = 2015050500;
-$plugin->release = 5;
+$plugin->release = 6;
 $plugin->maturity   = MATURITY_STABLE;
 $plugin->component = 'availability_paypal';

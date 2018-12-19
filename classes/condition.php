@@ -59,6 +59,10 @@ class condition extends \core_availability\condition {
         }
     }
 
+    /**
+     * Returns info to be saved.
+     * @return stdClass
+     */
     public function save() {
         $result = (object)array('type' => 'paypal');
         if ($this->businessemail) {
@@ -94,6 +98,11 @@ class condition extends \core_availability\condition {
         return (object)array('type' => 'paypal', 'businessemail' => $businessemail, 'currency' => $currency, 'cost' => $cost);
     }
 
+    /**
+     * Returns true if the user can access the context, false otherwise
+     *
+     * @return bool
+     */
     public function is_available($not, \core_availability\info $info, $grabthelot, $userid) {
         global $DB;
         // Should double-check with paypal everytime ?
@@ -108,6 +117,15 @@ class condition extends \core_availability\condition {
         return $allow;
     }
 
+    /**
+     * Shows the description using the different lang strings for the standalone
+     * version or the full one.
+     *
+     * @param bool $full Set true if this is the 'full information' view
+     * @param bool $not  True if NOT is in force
+     * @param bool $info Information about the availability condition and module context
+     * @return string    The string about the condition and it's status
+     */
     public function get_description($full, $not, \core_availability\info $info) {
         return $this->get_either_description($not, false, $info);
     }
@@ -115,20 +133,29 @@ class condition extends \core_availability\condition {
      * Shows the description using the different lang strings for the standalone
      * version or the full one.
      *
-     * @param bool $not True if NOT is in force
+     * @param bool $not        True if NOT is in force
      * @param bool $standalone True to use standalone lang strings
      * @param bool $info       Information about the availability condition and module context
+     * @return string          The string about the condition and it's status
      */
     protected function get_either_description($not, $standalone, $info) {
         $context = $info->get_context();
         $url = new \moodle_url('/availability/condition/paypal/view.php?contextid='.$context->id);
         if ($not) {
-          return get_string('notdescription', 'availability_paypal', $url->out());
+            return get_string('notdescription', 'availability_paypal', $url->out());
         } else {
-          return get_string('eitherdescription', 'availability_paypal', $url->out());
+            return get_string('eitherdescription', 'availability_paypal', $url->out());
         }
     }
 
+    /**
+     * Function used by backup restore
+     *
+     * @param int $restoreid
+     * @param int $courseid
+     * @param \base_logger $logger
+     * @param string $name
+     */
     public function update_after_restore($restoreid, $courseid, \base_logger $logger, $name) {
         // Update the date, if restoring with changed date.
         $dateoffset = \core_availability\info::get_restore_date_offset($restoreid);
@@ -139,6 +166,10 @@ class condition extends \core_availability\condition {
         return false;
     }
 
+    /**
+     * Returns a string to debug
+     * @return string
+     */
     protected function get_debug_string() {
         return gmdate('Y-m-d H:i:s');
     }
