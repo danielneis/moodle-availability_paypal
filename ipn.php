@@ -33,7 +33,6 @@
 // @codingStandardsIgnoreLine
 require("../../../config.php");
 
-require_once($CFG->libdir.'/eventslib.php');
 require_once($CFG->libdir . '/filelib.php');
 
 // PayPal does not like when we return error messages here,
