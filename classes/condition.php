@@ -145,8 +145,13 @@ class condition extends \core_availability\condition {
      * @return string          The string about the condition and it's status
      */
     protected function get_either_description($not, $standalone, $info) {
-        $context = $info->get_context();
-        $url = new \moodle_url('/availability/condition/paypal/view.php?contextid='.$context->id);
+        if (is_callable([$info, 'get_section'])) {
+            $params = ['sectionid' => $info->get_section()->id];
+        } else {
+            $cm = $info->get_course_module();
+            $params = ['cmid' => $cm->id];
+        }
+        $url = new \moodle_url('/availability/condition/paypal/view.php', $params);
         if ($not) {
             return get_string('notdescription', 'availability_paypal', $url->out());
         } else {

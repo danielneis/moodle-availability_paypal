@@ -75,36 +75,35 @@ $data->payment_gross        = optional_param('mc_gross', '', PARAM_TEXT);
 $data->payment_currency     = optional_param('mc_currency', '', PARAM_TEXT);
 $custom = optional_param('custom', '', PARAM_TEXT);
 $custom = explode('-', $custom);
-$data->userid           = (int)$custom[0];
-$data->contextid       = (int)$custom[1];
-$data->timeupdated      = time();
+$data->userid      = (int)$custom[0];
+$data->contextid   = (int)$custom[1];
+$data->sectionid   = (int)$custom[2];
+$data->timeupdated = time();
 
-if (! $user = $DB->get_record("user", array("id" => $data->userid))) {
+if (!$user = $DB->get_record("user", array("id" => $data->userid))) {
     availability_paypal_message_error_to_admin("Not a valid user id", $data);
     die;
 }
 
-if (! $context = context::instance_by_id($data->contextid, IGNORE_MISSING)) {
+if (!$context = context::instance_by_id($data->contextid, IGNORE_MISSING)) {
     availability_paypal_message_error_to_admin("Not a valid context id", $data);
     die;
 }
 
-$instanceid = $context->instanceid;
 if ($context instanceof context_module) {
-    $availability = $DB->get_field('course_modules', 'availability', array('id' => $instanceid), MUST_EXIST);
-    $availability = json_decode($availability);
-    foreach ($availability->c as $condition) {
-        if ($condition->type == 'paypal') {
-            // TODO: handle more than one paypal for this context.
-            $paypal = $condition;
-            break;
-        } else {
-            availability_paypal_message_error_to_admin("Not a valid context id", $data);
-        }
-    }
+    $availability = $DB->get_field('course_modules', 'availability', ['id' => $context->instanceid], MUST_EXIST);
 } else {
-    // TODO: handle sections.
-    print_error('support to sections not yet implemented.');
+    $availability = $DB->get_field('course_sections', 'availability', ['id' => $data->sectionid], MUST_EXIST);
+}
+$availability = json_decode($availability);
+foreach ($availability->c as $condition) {
+    if ($condition->type == 'paypal') {
+        // TODO: handle more than one paypal for this context.
+        $paypal = $condition;
+        break;
+    } else {
+        availability_paypal_message_error_to_admin("Not a valid context id", $data);
+    }
 }
 
 // Open a connection back to PayPal to validate the data.
@@ -179,53 +178,6 @@ if (strlen($result) > 0) {
         if ($existing = $DB->get_record("availability_paypal_tnx", array("txn_id" => $data->txn_id))) {
             availability_paypal_message_error_to_admin("Transaction $data->txn_id is being repeated!", $data);
             die;
-        }
-
-        // Check that the email is the one we want it to be.
-        if (core_text::strtolower($data->business) !== core_text::strtolower($paypal->businessemail)) {
-            availability_paypal_message_error_to_admin("Business email is {$data->business} (not ".
-                                            $paypal->businessemail.")", $data);
-            die;
-        }
-
-        // Check that user exists.
-        if (!$user = $DB->get_record('user', array('id' => $data->userid))) {
-            availability_paypal_message_error_to_admin("User {$data->userid} doesn't exist", $data);
-            die;
-        }
-
-        // Check that course exists.
-        if (!$course = $DB->get_record('course', array('id' => $data->courseid))) {
-            availability_paypal_message_error_to_admin("Course {$data->courseid} doesn't exist", $data);
-            die;
-        }
-
-        $coursecontext = context_course::instance($course->id, IGNORE_MISSING);
-
-        // Check that amount paid is the correct amount.
-        if ( (float) $paypal->cost < 0 ) {
-            $cost = (float) 0;
-        } else {
-            $cost = (float) $paypal->cost;
-        }
-
-        // Use the same rounding of floats as on the plugin form.
-        $cost = format_float($cost, 2, false);
-
-        if ($data->payment_gross < $cost) {
-            availability_paypal_message_error_to_admin("Amount paid is not enough ({$data->payment_gross} < {$cost}))", $data);
-            die;
-        }
-
-        // All clear!
-
-        // Pass $view=true to filter hidden caps if the user cannot see them.
-        if ($users = get_users_by_capability($context, 'moodle/course:update', 'u.*', 'u.id ASC',
-                                             '', '', '', '', false, true)) {
-            $users = sort_by_roleassignment_authority($users, $context);
-            $teacher = array_shift($users);
-        } else {
-            $teacher = false;
         }
 
     } else if (strcmp ($result, "INVALID") == 0) { // ERROR.

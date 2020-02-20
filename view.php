@@ -27,47 +27,53 @@
 
 require_once('../../../config.php');
 
-$contextid = required_param('contextid', PARAM_INT);
+$cmid = optional_param('cmid', 0, PARAM_INT);
+$sectionid = optional_param('sectionid', 0, PARAM_INT);
 
-$context = context::instance_by_id($contextid);
-$instanceid = $context->instanceid;
-if ($context instanceof context_module) {
-    $availability = $DB->get_field('course_modules', 'availability', array('id' => $instanceid), MUST_EXIST);
-    $availability = json_decode($availability);
-    foreach ($availability->c as $condition) {
-        if ($condition->type == 'paypal') {
-            // TODO: handle more than one paypal for this context.
-            $paypal = $condition;
-            break;
-        } else {
-            print_error('no paypal condition for this context.');
-        }
-    }
-} else {
-    // TODO: handle sections.
-    print_error('support to sections not yet implemented.');
+if (!$cmid && !$sectionid) {
+    print_error('invalidparam');
 }
-$coursecontext = $context->get_course_context();
-$course = $DB->get_record('course', array('id' => $coursecontext->instanceid));
+
+if ($cmid) {
+    $availability = $DB->get_record('course_modules', ['id' => $cmid], 'course, availability', MUST_EXIST);
+    $contextid = $DB->get_field('context', 'id', ['contextlevel' => CONTEXT_MODULE, 'instanceid' => $cmid]);
+    $urlparams = ['cmid' => $cmid];
+} else {
+    $availability = $DB->get_record('course_sections', ['id' => $sectionid], 'course, availability', MUST_EXIST);
+    $contextid = $DB->get_field('context', 'id', ['contextlevel' => CONTEXT_COURSE, 'instanceid' => $availability->course]);
+    $urlparams = ['sectionid' => $sectionid];
+}
+$conditions = json_decode($availability->availability);
+foreach ($conditions->c as $condition) {
+    if ($condition->type == 'paypal') {
+        // TODO: handle more than one paypal for this context.
+        $paypal = $condition;
+        break;
+    } else {
+        print_error('no paypal condition for this context.');
+    }
+}
+
+$course = $DB->get_record('course', ['id' => $availability->course]);
 
 require_login($course);
 
-if ($paymenttnx = $DB->get_record('availability_paypal_tnx', array('userid' => $USER->id, 'contextid' => $contextid))) {
-
+$context = \context::instance_by_id($contextid);
+$tnxparams = ['userid' => $USER->id, 'contextid' => $contextid, 'sectionid' => $sectionid];
+if ($paymenttnx = $DB->get_record('availability_paypal_tnx', $tnxparams)) {
     if ($paymenttnx->payment_status == 'Completed') {
         redirect($context->get_url(), get_string('paymentcompleted', 'availability_paypal'));
     }
 }
 
-$PAGE->set_url('/availability/condition/paypal/view.php', array('contextid' => $contextid));
+$PAGE->set_url('/availability/condition/paypal/view.php', $urlparams);
 $PAGE->set_title($course->fullname);
 $PAGE->set_heading($course->fullname);
 
 $PAGE->navbar->add($paypal->itemname);
 
-echo $OUTPUT->header();
-
-echo $OUTPUT->heading($paypal->itemname);
+echo $OUTPUT->header(),
+     $OUTPUT->heading($paypal->itemname);
 
 if ($paymenttnx && ($paymenttnx->payment_status == 'Pending')) {
     echo get_string('paymentpending', 'availability_paypal');
@@ -121,7 +127,7 @@ if ($paymenttnx && ($paymenttnx->payment_status == 'Pending')) {
             <input type="hidden" name="quantity" value="1" />
             <input type="hidden" name="on0" value="<?php print_string("user") ?>" />
             <input type="hidden" name="os0" value="<?php p($userfullname) ?>" />
-            <input type="hidden" name="custom" value="<?php echo "{$USER->id}-{$contextid}" ?>" />
+            <input type="hidden" name="custom" value="<?php echo "{$USER->id}-{$contextid}-{$sectionid}" ?>" />
 
             <input type="hidden" name="currency_code" value="<?php p($paypal->currency) ?>" />
             <input type="hidden" name="amount" value="<?php p($cost) ?>" />
@@ -130,9 +136,8 @@ if ($paymenttnx && ($paymenttnx->payment_status == 'Pending')) {
             <input type="hidden" name="no_note" value="1" />
             <input type="hidden" name="no_shipping" value="1" />
             <input type="hidden" name="notify_url" value="<?php echo "{$CFG->wwwroot}/availability/condition/paypal/ipn.php" ?>" />
-            <?php $returnurl = $CFG->wwwroot . '/availability/condition/paypal/view.php?contextid=' . $contextid; ?>
-            <input type="hidden" name="return" value="<?php echo $returnurl; ?>" />
-            <input type="hidden" name="cancel_return" value="<?php echo $returnurl; ?>" />
+            <input type="hidden" name="return" value="<?php echo $PAGE->url->out(false); ?>" />
+            <input type="hidden" name="cancel_return" value="<?php echo $PAGE->url->out(false); ?>" />
             <input type="hidden" name="rm" value="2" />
             <input type="hidden" name="cbt" value="<?php print_string("continue", 'availability_paypal') ?>" />
 
@@ -148,5 +153,4 @@ if ($paymenttnx && ($paymenttnx->payment_status == 'Pending')) {
 <?php
     }
 }
-// Finish the page.
 echo $OUTPUT->footer();
