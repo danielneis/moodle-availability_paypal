@@ -49,9 +49,11 @@ foreach ($conditions->c as $condition) {
         // TODO: handle more than one paypal for this context.
         $paypal = $condition;
         break;
-    } else {
-        print_error('no paypal condition for this context.');
     }
+    continue;
+}
+if (!isset($paypal)) {
+    print_error('no paypal condition for this context.');
 }
 
 $course = $DB->get_record('course', ['id' => $availability->course]);
@@ -60,11 +62,11 @@ require_login($course);
 
 $context = \context::instance_by_id($contextid);
 $tnxparams = ['userid' => $USER->id, 'contextid' => $contextid, 'sectionid' => $sectionid];
-if ($paymenttnx = $DB->get_record('availability_paypal_tnx', $tnxparams)) {
-    if ($paymenttnx->payment_status == 'Completed') {
-        redirect($context->get_url(), get_string('paymentcompleted', 'availability_paypal'));
-    }
+$paymenttnx = $DB->get_record('availability_paypal_tnx', $tnxparams + ['payment_status' => 'Completed']);
+if ($paymenttnx) {
+    redirect($context->get_url(), get_string('paymentcompleted', 'availability_paypal'));
 }
+$paymenttnx = $DB->get_record('availability_paypal_tnx', $tnxparams);
 
 $PAGE->set_url('/availability/condition/paypal/view.php', $urlparams);
 $PAGE->set_title($course->fullname);
