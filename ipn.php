@@ -202,7 +202,7 @@ function availability_paypal_message_error_to_admin($subject, $data) {
         $message .= "{$key} => {$value};";
     }
 
-    $eventdata = new stdClass();
+    $eventdata = new \core\message\message();
     $eventdata->component         = 'availability_paypal';
     $eventdata->name              = 'payment_error';
     $eventdata->userfrom          = $admin;
