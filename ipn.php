@@ -107,7 +107,7 @@ foreach ($availability->c as $condition) {
 }
 
 // Open a connection back to PayPal to validate the data.
-$paypaladdr = empty($CFG->usepaypalsandbox) ? 'www.paypal.com' : 'www.sandbox.paypal.com';
+$paypaladdr = empty($CFG->usepaypalsandbox) ? 'ipnpb.paypal.com' : 'ipnpb.sandbox.paypal.com';
 $c = new curl();
 $options = array(
     'returntransfer' => true,
