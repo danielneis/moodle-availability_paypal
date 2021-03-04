@@ -147,6 +147,13 @@ if (strlen($result) > 0) {
             die;
         }
 
+        // If cost is incorrectly set then someone maybe trying to cheat the system.
+        if ($data->payment_gross != $paypal->cost) {
+            $str = "Payment gross does not match course settings, received: " . $data->payment_gross;
+            availability_paypal_message_error_to_admin($str, $data);
+            die;
+        }
+
         // If status is pending and reason is other than echeck,
         // then we are on hold until further notice.
         // Email user to let them know. Email admin.
