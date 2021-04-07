@@ -111,12 +111,20 @@ class condition extends \core_availability\condition {
      */
     public function is_available($not, \core_availability\info $info, $grabthelot, $userid) {
         global $DB;
-        // Should double-check with paypal everytime ?
-        $context = $info->get_context();
-        $allow = $DB->record_exists('availability_paypal_tnx',
-                                  array('userid' => $userid,
-                                        'contextid' => $context->id,
-                                        'payment_status' => 'Completed'));
+        $allow = false;
+        if (is_a($info, '\\core_availability\\info_module')) {
+            $context = $info->get_context();
+            $allow = $DB->record_exists('availability_paypal_tnx',
+                                      array('userid' => $userid,
+                                            'contextid' => $context->id,
+                                            'payment_status' => 'Completed'));
+        } else if (is_a($info, '\\core_availability\\info_section')) {
+            $section = $info->get_section();
+            $allow = $DB->record_exists('availability_paypal_tnx',
+                                      array('userid' => $userid,
+                                            'sectionid' => $section->id,
+                                            'payment_status' => 'Completed'));
+        }
         if ($not) {
             $allow = !$allow;
         }
