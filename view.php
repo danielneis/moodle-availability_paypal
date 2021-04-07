@@ -26,6 +26,7 @@
  */
 
 require_once('../../../config.php');
+require_once($CFG->dirroot.'/availability/condition/paypal/lib.php');
 
 $cmid = optional_param('cmid', 0, PARAM_INT);
 $sectionid = optional_param('sectionid', 0, PARAM_INT);
@@ -43,16 +44,11 @@ if ($cmid) {
     $contextid = $DB->get_field('context', 'id', ['contextlevel' => CONTEXT_COURSE, 'instanceid' => $availability->course]);
     $urlparams = ['sectionid' => $sectionid];
 }
+
 $conditions = json_decode($availability->availability);
-foreach ($conditions->c as $condition) {
-    if ($condition->type == 'paypal') {
-        // TODO: handle more than one paypal for this context.
-        $paypal = $condition;
-        break;
-    }
-    continue;
-}
-if (!isset($paypal)) {
+$paypal = availability_paypal_find_condition($conditions);
+
+if (is_null($paypal)) {
     print_error('no paypal condition for this context.');
 }
 

@@ -15,17 +15,23 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Version info.
+ * Support functions
  *
  * @package availability_paypal
- * @copyright  2015 Daniel Neis Araujo <danielneis@gmail.com>
+ * @copyright 2015 Daniel Neis Araujo
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version = 2021040700;
-$plugin->requires = 2018120300;
-$plugin->release = 13;
-$plugin->maturity   = MATURITY_STABLE;
-$plugin->component = 'availability_paypal';
+function availability_paypal_find_condition($conditions) {
+    foreach ($conditions->c as $cond) {
+        if (isset($cond->c)) {
+            return availability_paypal_find_condition($cond);
+        } else if ($cond->type == 'paypal') {
+            return $cond;
+        }
+    }
+    return null;
+    // TODO: handle more than one paypal in same context.
+}
