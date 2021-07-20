@@ -101,15 +101,22 @@ if ($context instanceof context_module) {
 } else {
     $availability = $DB->get_field('course_sections', 'availability', ['id' => $data->sectionid], MUST_EXIST);
 }
+
 $availability = json_decode($availability);
+
+$paypal = null;
+
 foreach ($availability->c as $condition) {
     if ($condition->type == 'paypal') {
         // TODO: handle more than one paypal for this context.
         $paypal = $condition;
         break;
-    } else {
-        availability_paypal_message_error_to_admin("Not a valid context id", $data);
     }
+}
+
+if (empty($paypal)) {
+    availability_paypal_message_error_to_admin("PayPal condition not found while processing incoming IPN", $data);
+    die();
 }
 
 // Open a connection back to PayPal to validate the data.
@@ -124,8 +131,7 @@ $options = array(
 $location = "https://{$paypaladdr}/cgi-bin/webscr";
 $result = $c->post($location, $req, $options);
 
-if (!$result) {  // Could not connect to PayPal - FAIL.
-    echo "<p>Error: could not access paypal.com</p>";
+if ($c->get_errno()) {
     availability_paypal_message_error_to_admin("Could not access paypal.com to verify payment", $data);
     die;
 }
