@@ -29,9 +29,11 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+define('NO_MOODLE_COOKIES', 1);
+
 // This file do not require login because paypal service will use to confirm transactions.
 // @codingStandardsIgnoreLine
-require("../../../config.php");
+require(__DIR__ . '/../../../config.php');
 
 require_once($CFG->libdir . '/filelib.php');
 
@@ -41,7 +43,7 @@ set_exception_handler('availability_paypal_ipn_exception_handler');
 
 // Keep out casual intruders.
 if (empty($_POST) or !empty($_GET)) {
-    print_error("Sorry, you can not use the script that way.");
+    die("Sorry, you can not use the script that way.");
 }
 
 // Read all the data from PayPal and get it ready for later;
@@ -51,7 +53,7 @@ if (empty($_POST) or !empty($_GET)) {
 $req = 'cmd=_notify-validate';
 
 foreach ($_POST as $key => $value) {
-        $req .= "&$key=".urlencode($value);
+    $req .= "&$key=" . urlencode($value);
 }
 
 $data = new stdclass();
@@ -73,37 +75,54 @@ $data->parent_txn_id        = optional_param('parent_txn_id', '', PARAM_TEXT);
 $data->payment_type         = optional_param('payment_type', '', PARAM_TEXT);
 $data->payment_gross        = optional_param('mc_gross', '', PARAM_TEXT);
 $data->payment_currency     = optional_param('mc_currency', '', PARAM_TEXT);
+
 $custom = optional_param('custom', '', PARAM_TEXT);
 $custom = explode('-', $custom);
-$data->userid      = (int)$custom[0];
-$data->contextid   = (int)$custom[1];
-$data->sectionid   = (int)$custom[2];
+
+$data->userid = (int) ($custom[0] ?? -1);
+$data->contextid = (int) ($custom[1] ?? -1);
+$data->sectionid = (int) ($custom[2] ?? -1);
+
 $data->timeupdated = time();
 
 if (!$user = $DB->get_record("user", array("id" => $data->userid))) {
-    availability_paypal_message_error_to_admin("Not a valid user id", $data);
+    $PAGE->set_context(context_system::instance());
+    availability_paypal_message_error("Not a valid user id", $data);
     die;
 }
 
 if (!$context = context::instance_by_id($data->contextid, IGNORE_MISSING)) {
-    availability_paypal_message_error_to_admin("Not a valid context id", $data);
+    $PAGE->set_context(context_system::instance());
+    availability_paypal_message_error("Not a valid context id", $data);
     die;
 }
+
+$PAGE->set_context($context);
 
 if ($context instanceof context_module) {
     $availability = $DB->get_field('course_modules', 'availability', ['id' => $context->instanceid], MUST_EXIST);
 } else {
     $availability = $DB->get_field('course_sections', 'availability', ['id' => $data->sectionid], MUST_EXIST);
 }
+
 $availability = json_decode($availability);
-foreach ($availability->c as $condition) {
-    if ($condition->type == 'paypal') {
-        // TODO: handle more than one paypal for this context.
-        $paypal = $condition;
-        break;
-    } else {
-        availability_paypal_message_error_to_admin("Not a valid context id", $data);
+
+$paypal = null;
+
+if ($availability) {
+    // There can be multiple conditions specified. Find the first of the type "paypal".
+    // TODO: Support more than one paypal condition specified.
+    foreach ($availability->c as $condition) {
+        if ($condition->type == 'paypal') {
+            $paypal = $condition;
+            break;
+        }
     }
+}
+
+if (empty($paypal)) {
+    availability_paypal_message_error("PayPal condition not found while processing incoming IPN", $data);
+    die();
 }
 
 // Open a connection back to PayPal to validate the data.
@@ -118,9 +137,8 @@ $options = array(
 $location = "https://{$paypaladdr}/cgi-bin/webscr";
 $result = $c->post($location, $req, $options);
 
-if (!$result) {  // Could not connect to PayPal - FAIL.
-    echo "<p>Error: could not access paypal.com</p>";
-    availability_paypal_message_error_to_admin("Could not access paypal.com to verify payment", $data);
+if ($c->get_errno()) {
+    availability_paypal_message_error("Could not access paypal.com to verify payment", $data);
     die;
 }
 
@@ -137,20 +155,20 @@ if (strlen($result) > 0) {
 
         // If status is not completed, just tell admin, transaction will be saved later.
         if ($data->payment_status != "Completed" and $data->payment_status != "Pending") {
-            availability_paypal_message_error_to_admin("Status not completed or pending. User payment status updated", $data);
+            availability_paypal_message_error("Status not completed or pending. User payment status updated", $data);
         }
 
         // If currency is incorrectly set then someone maybe trying to cheat the system.
         if ($data->payment_currency != $paypal->currency) {
             $str = "Currency does not match course settings, received: " . $data->payment_currency;
-            availability_paypal_message_error_to_admin($str, $data);
+            availability_paypal_message_error($str, $data);
             die;
         }
 
         // If cost is incorrectly set then someone maybe trying to cheat the system.
         if ($data->payment_gross != $paypal->cost) {
             $str = "Payment gross does not match course settings, received: " . $data->payment_gross;
-            availability_paypal_message_error_to_admin($str, $data);
+            availability_paypal_message_error($str, $data);
             die;
         }
 
@@ -183,13 +201,13 @@ if (strlen($result) > 0) {
 
         // Make sure this transaction doesn't exist already.
         if ($existing = $DB->get_record("availability_paypal_tnx", array("txn_id" => $data->txn_id))) {
-            availability_paypal_message_error_to_admin("Transaction $data->txn_id is being repeated!", $data);
+            availability_paypal_message_error("Transaction $data->txn_id is being repeated!", $data);
             die;
         }
 
     } else if (strcmp ($result, "INVALID") == 0) { // ERROR.
         $DB->insert_record("availability_paypal_tnx", $data, false);
-        availability_paypal_message_error_to_admin("Received an invalid payment notification!! (Fake payment?)", $data);
+        availability_paypal_message_error("Received an invalid payment notification!! (Fake payment?)", $data);
     }
 }
 
@@ -199,27 +217,40 @@ if (strlen($result) > 0) {
  * @param string $subject
  * @param stdClass $data
  */
-function availability_paypal_message_error_to_admin($subject, $data) {
-    $admin = get_admin();
-    $site = get_site();
+function availability_paypal_message_error($subject, $data) {
 
-    $message = "$site->fullname:  Transaction failed:{$subject}";
+    $userfrom = core_user::get_noreply_user();
+    $recipients = get_users_by_capability(context_system::instance(), 'availability/paypal:receivenotifications');
 
-    foreach ($data as $key => $value) {
-        $message .= "{$key} => {$value};";
+    if (empty($recipients)) {
+        // Make sure that someone is notified.
+        $recipients = get_admins();
     }
 
-    $eventdata = new \core\message\message();
-    $eventdata->component         = 'availability_paypal';
-    $eventdata->name              = 'payment_error';
-    $eventdata->userfrom          = $admin;
-    $eventdata->userto            = $admin;
-    $eventdata->subject           = "PayPal ERROR: ".$subject;
-    $eventdata->fullmessage       = $message;
-    $eventdata->fullmessageformat = FORMAT_PLAIN;
-    $eventdata->fullmessagehtml   = '';
-    $eventdata->smallmessage      = '';
-    message_send($eventdata);
+    $site = get_site();
+
+    $text = "$site->fullname: PayPal transaction problem: {$subject}\n\n";
+    $text .= "Transaction data:\n";
+
+    if ($data) {
+        foreach ($data as $key => $value) {
+            $text .= "* {$key} => {$value}\n";
+        }
+    }
+
+    foreach ($recipients as $recipient) {
+        $message = new \core\message\message();
+        $message->component = 'availability_paypal';
+        $message->name = 'payment_error';
+        $message->userfrom = core_user::get_noreply_user();
+        $message->userto = $recipient;
+        $message->subject = "PayPal ERROR: " . $subject;
+        $message->fullmessage = $text;
+        $message->fullmessageformat = FORMAT_PLAIN;
+        $message->fullmessagehtml = text_to_html($text);
+        $message->smallmessage = $subject;
+        message_send($message);
+    }
 }
 
 /**
