@@ -28,6 +28,9 @@ This works like the [PayPal enrol plugin](https://docs.moodle.org/en/Paypal_enro
 
 For each restriction you add, you can set a business email address, cost, currency, item name and item number.
 
+In case of problems with the payment, all users with the capability "Receive payment notifications" (availability/paypal:receivenotifications) are notified via email and Moodle messaging. If there is no dedicated user with that capability, all site administrators are notified by default.
+
+
 Funding
 -------
 

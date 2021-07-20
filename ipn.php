@@ -87,13 +87,13 @@ $data->timeupdated = time();
 
 if (!$user = $DB->get_record("user", array("id" => $data->userid))) {
     $PAGE->set_context(context_system::instance());
-    availability_paypal_message_error_to_admin("Not a valid user id", $data);
+    availability_paypal_message_error("Not a valid user id", $data);
     die;
 }
 
 if (!$context = context::instance_by_id($data->contextid, IGNORE_MISSING)) {
     $PAGE->set_context(context_system::instance());
-    availability_paypal_message_error_to_admin("Not a valid context id", $data);
+    availability_paypal_message_error("Not a valid context id", $data);
     die;
 }
 
@@ -121,7 +121,7 @@ if ($availability) {
 }
 
 if (empty($paypal)) {
-    availability_paypal_message_error_to_admin("PayPal condition not found while processing incoming IPN", $data);
+    availability_paypal_message_error("PayPal condition not found while processing incoming IPN", $data);
     die();
 }
 
@@ -138,7 +138,7 @@ $location = "https://{$paypaladdr}/cgi-bin/webscr";
 $result = $c->post($location, $req, $options);
 
 if ($c->get_errno()) {
-    availability_paypal_message_error_to_admin("Could not access paypal.com to verify payment", $data);
+    availability_paypal_message_error("Could not access paypal.com to verify payment", $data);
     die;
 }
 
@@ -155,20 +155,20 @@ if (strlen($result) > 0) {
 
         // If status is not completed, just tell admin, transaction will be saved later.
         if ($data->payment_status != "Completed" and $data->payment_status != "Pending") {
-            availability_paypal_message_error_to_admin("Status not completed or pending. User payment status updated", $data);
+            availability_paypal_message_error("Status not completed or pending. User payment status updated", $data);
         }
 
         // If currency is incorrectly set then someone maybe trying to cheat the system.
         if ($data->payment_currency != $paypal->currency) {
             $str = "Currency does not match course settings, received: " . $data->payment_currency;
-            availability_paypal_message_error_to_admin($str, $data);
+            availability_paypal_message_error($str, $data);
             die;
         }
 
         // If cost is incorrectly set then someone maybe trying to cheat the system.
         if ($data->payment_gross != $paypal->cost) {
             $str = "Payment gross does not match course settings, received: " . $data->payment_gross;
-            availability_paypal_message_error_to_admin($str, $data);
+            availability_paypal_message_error($str, $data);
             die;
         }
 
@@ -201,13 +201,13 @@ if (strlen($result) > 0) {
 
         // Make sure this transaction doesn't exist already.
         if ($existing = $DB->get_record("availability_paypal_tnx", array("txn_id" => $data->txn_id))) {
-            availability_paypal_message_error_to_admin("Transaction $data->txn_id is being repeated!", $data);
+            availability_paypal_message_error("Transaction $data->txn_id is being repeated!", $data);
             die;
         }
 
     } else if (strcmp ($result, "INVALID") == 0) { // ERROR.
         $DB->insert_record("availability_paypal_tnx", $data, false);
-        availability_paypal_message_error_to_admin("Received an invalid payment notification!! (Fake payment?)", $data);
+        availability_paypal_message_error("Received an invalid payment notification!! (Fake payment?)", $data);
     }
 }
 
@@ -217,27 +217,40 @@ if (strlen($result) > 0) {
  * @param string $subject
  * @param stdClass $data
  */
-function availability_paypal_message_error_to_admin($subject, $data) {
-    $admin = get_admin();
-    $site = get_site();
+function availability_paypal_message_error($subject, $data) {
 
-    $message = "$site->fullname:  Transaction failed:{$subject}";
+    $userfrom = core_user::get_noreply_user();
+    $recipients = get_users_by_capability(context_system::instance(), 'availability/paypal:receivenotifications');
 
-    foreach ($data as $key => $value) {
-        $message .= "{$key} => {$value};";
+    if (empty($recipients)) {
+        // Make sure that someone is notified.
+        $recipients = get_admins();
     }
 
-    $eventdata = new \core\message\message();
-    $eventdata->component         = 'availability_paypal';
-    $eventdata->name              = 'payment_error';
-    $eventdata->userfrom          = $admin;
-    $eventdata->userto            = $admin;
-    $eventdata->subject           = "PayPal ERROR: ".$subject;
-    $eventdata->fullmessage       = $message;
-    $eventdata->fullmessageformat = FORMAT_PLAIN;
-    $eventdata->fullmessagehtml   = '';
-    $eventdata->smallmessage      = '';
-    message_send($eventdata);
+    $site = get_site();
+
+    $text = "$site->fullname: PayPal transaction problem: {$subject}\n\n";
+    $text .= "Transaction data:\n";
+
+    if ($data) {
+        foreach ($data as $key => $value) {
+            $text .= "* {$key} => {$value}\n";
+        }
+    }
+
+    foreach ($recipients as $recipient) {
+        $message = new \core\message\message();
+        $message->component = 'availability_paypal';
+        $message->name = 'payment_error';
+        $message->userfrom = core_user::get_noreply_user();
+        $message->userto = $recipient;
+        $message->subject = "PayPal ERROR: " . $subject;
+        $message->fullmessage = $text;
+        $message->fullmessageformat = FORMAT_PLAIN;
+        $message->fullmessagehtml = text_to_html($text);
+        $message->smallmessage = $subject;
+        message_send($message);
+    }
 }
 
 /**
