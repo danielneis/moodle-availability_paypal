@@ -33,7 +33,7 @@ define('NO_MOODLE_COOKIES', 1);
 
 // This file do not require login because paypal service will use to confirm transactions.
 // @codingStandardsIgnoreLine
-require("../../../config.php");
+require(__DIR__ . '/../../../config.php');
 
 require_once($CFG->libdir . '/filelib.php');
 
@@ -53,7 +53,7 @@ if (empty($_POST) or !empty($_GET)) {
 $req = 'cmd=_notify-validate';
 
 foreach ($_POST as $key => $value) {
-        $req .= "&$key=".urlencode($value);
+    $req .= "&$key=" . urlencode($value);
 }
 
 $data = new stdclass();
@@ -75,11 +75,14 @@ $data->parent_txn_id        = optional_param('parent_txn_id', '', PARAM_TEXT);
 $data->payment_type         = optional_param('payment_type', '', PARAM_TEXT);
 $data->payment_gross        = optional_param('mc_gross', '', PARAM_TEXT);
 $data->payment_currency     = optional_param('mc_currency', '', PARAM_TEXT);
+
 $custom = optional_param('custom', '', PARAM_TEXT);
 $custom = explode('-', $custom);
-$data->userid      = (int)$custom[0];
-$data->contextid   = (int)$custom[1];
-$data->sectionid   = (int)$custom[2];
+
+$data->userid = (int) ($custom[0] ?? -1);
+$data->contextid = (int) ($custom[1] ?? -1);
+$data->sectionid = (int) ($custom[2] ?? -1);
+
 $data->timeupdated = time();
 
 if (!$user = $DB->get_record("user", array("id" => $data->userid))) {
@@ -106,11 +109,14 @@ $availability = json_decode($availability);
 
 $paypal = null;
 
-foreach ($availability->c as $condition) {
-    if ($condition->type == 'paypal') {
-        // TODO: handle more than one paypal for this context.
-        $paypal = $condition;
-        break;
+if ($availability) {
+    // There can be multiple conditions specified. Find the first of the type "paypal".
+    // TODO: Support more than one paypal condition specified.
+    foreach ($availability->c as $condition) {
+        if ($condition->type == 'paypal') {
+            $paypal = $condition;
+            break;
+        }
     }
 }
 
