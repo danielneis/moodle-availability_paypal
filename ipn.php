@@ -83,14 +83,18 @@ $data->sectionid   = (int)$custom[2];
 $data->timeupdated = time();
 
 if (!$user = $DB->get_record("user", array("id" => $data->userid))) {
+    $PAGE->set_context(context_system::instance());
     availability_paypal_message_error_to_admin("Not a valid user id", $data);
     die;
 }
 
 if (!$context = context::instance_by_id($data->contextid, IGNORE_MISSING)) {
+    $PAGE->set_context(context_system::instance());
     availability_paypal_message_error_to_admin("Not a valid context id", $data);
     die;
 }
+
+$PAGE->set_context($context);
 
 if ($context instanceof context_module) {
     $availability = $DB->get_field('course_modules', 'availability', ['id' => $context->instanceid], MUST_EXIST);
