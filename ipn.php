@@ -30,6 +30,7 @@
  */
 
 define('NO_MOODLE_COOKIES', 1);
+define('NO_DEBUG_DISPLAY', 1);
 
 // This file do not require login because paypal service will use to confirm transactions.
 // @codingStandardsIgnoreLine
@@ -266,6 +267,6 @@ function availability_paypal_ipn_exception_handler($ex) {
     if (debugging('', DEBUG_NORMAL)) {
         $logerrmsg .= ' Debug: '.$info->debuginfo."\n".format_backtrace($info->backtrace, true);
     }
-    mtrace($logerrmsg);
+    debugging($logerrmsg);
     exit(0);
 }
