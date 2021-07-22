@@ -30,6 +30,7 @@ require_once($CFG->dirroot.'/availability/condition/paypal/lib.php');
 
 $cmid = optional_param('cmid', 0, PARAM_INT);
 $sectionid = optional_param('sectionid', 0, PARAM_INT);
+$paymentid = optional_param('paymentid', null, PARAM_ALPHANUM);
 
 if (!$cmid && !$sectionid) {
     print_error('invalidparam');
@@ -59,9 +60,12 @@ require_login($course);
 $context = \context::instance_by_id($contextid);
 $tnxparams = ['userid' => $USER->id, 'contextid' => $contextid, 'sectionid' => $sectionid];
 $paymenttnx = $DB->get_record('availability_paypal_tnx', $tnxparams + ['payment_status' => 'Completed']);
+
 if ($paymenttnx) {
+    unset($SESSION->availability_paypal->paymentid);
     redirect($context->get_url(), get_string('paymentcompleted', 'availability_paypal'));
 }
+
 $paymenttnx = $DB->get_record('availability_paypal_tnx', $tnxparams);
 
 $PAGE->set_url('/availability/condition/paypal/view.php', $urlparams);
@@ -75,6 +79,13 @@ echo $OUTPUT->header(),
 
 if ($paymenttnx && ($paymenttnx->payment_status == 'Pending')) {
     echo get_string('paymentpending', 'availability_paypal');
+    echo $OUTPUT->continue_button($context->get_url(), 'get');
+
+} else if ($paymentid !== null && $paymentid === ($SESSION->availability_paypal->paymentid ?? null)) {
+    // The users returned from PayPal before the IPN was processed.
+    echo get_string('paymentpending', 'availability_paypal');
+    echo $OUTPUT->continue_button($context->get_url(), 'get');
+
 } else {
 
     // Calculate localised and "." cost, make sure we send PayPal the same value,
@@ -114,6 +125,12 @@ if ($paymenttnx && ($paymenttnx->payment_status == 'Pending')) {
         } else {
             $paypalurl = 'https://www.sandbox.paypal.com/cgi-bin/webscr';
         }
+
+        // Add a helper parameter for us to see that we just returned from PayPal.
+        $SESSION->availability_paypal = $SESSION->availability_paypal ?? (object) [];
+        $SESSION->availability_paypal->paymentid = clean_param(uniqid(), PARAM_ALPHANUM);
+        $returnurl = new moodle_url($PAGE->url, ['paymentid' => $SESSION->availability_paypal->paymentid]);
+
         ?>
         <form action="<?php echo $paypalurl ?>" method="post">
 
@@ -134,7 +151,7 @@ if ($paymenttnx && ($paymenttnx->payment_status == 'Pending')) {
             <input type="hidden" name="no_note" value="1" />
             <input type="hidden" name="no_shipping" value="1" />
             <input type="hidden" name="notify_url" value="<?php echo "{$CFG->wwwroot}/availability/condition/paypal/ipn.php" ?>" />
-            <input type="hidden" name="return" value="<?php echo $PAGE->url->out(false); ?>" />
+            <input type="hidden" name="return" value="<?php echo $returnurl->out(false); ?>" />
             <input type="hidden" name="cancel_return" value="<?php echo $PAGE->url->out(false); ?>" />
             <input type="hidden" name="rm" value="2" />
             <input type="hidden" name="cbt" value="<?php print_string("continue", 'availability_paypal') ?>" />
