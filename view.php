@@ -163,7 +163,7 @@ if ($paymenttnx && ($paymenttnx->payment_status == 'Pending')) {
             <input type="hidden" name="email" value="<?php p($USER->email) ?>" />
             <input type="hidden" name="country" value="<?php p($USER->country) ?>" />
 
-            <input type="submit" value="<?php print_string("sendpaymentbutton", "availability_paypal") ?>" />
+            <input type="submit" class="btn btn-primary" value="<?php print_string("sendpaymentbutton", "availability_paypal") ?>" />
         </form>
 <?php
     }
