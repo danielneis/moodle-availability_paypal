@@ -30,6 +30,7 @@
  */
 
 define('NO_MOODLE_COOKIES', 1);
+define('NO_DEBUG_DISPLAY', 1);
 
 // This file do not require login because paypal service will use to confirm transactions.
 // @codingStandardsIgnoreLine
@@ -85,6 +86,8 @@ $data->sectionid = (int) ($custom[2] ?? -1);
 
 $data->timeupdated = time();
 
+debugging('availability_paypal IPN incoming request: ' . json_encode($data), DEBUG_DEVELOPER);
+
 if (!$user = $DB->get_record("user", array("id" => $data->userid))) {
     $PAGE->set_context(context_system::instance());
     availability_paypal_message_error("Not a valid user id", $data);
@@ -135,6 +138,9 @@ $options = array(
     'CURLOPT_HTTP_VERSION' => CURL_HTTP_VERSION_1_1,
 );
 $location = "https://{$paypaladdr}/cgi-bin/webscr";
+
+debugging('availability_paypal IPN verification request: ' . json_encode($req), DEBUG_DEVELOPER);
+
 $result = $c->post($location, $req, $options);
 
 if ($c->get_errno()) {
@@ -142,9 +148,7 @@ if ($c->get_errno()) {
     die;
 }
 
-// Connection is OK, so now we post the data to validate it.
-
-// Now read the response and check if everything is OK.
+debugging('availability_paypal IPN verification response: ' . $result, DEBUG_DEVELOPER);
 
 if (strlen($result) > 0) {
     if (strcmp($result, "VERIFIED") == 0) {          // VALID PAYMENT!
@@ -249,7 +253,14 @@ function availability_paypal_message_error($subject, $data) {
         $message->fullmessageformat = FORMAT_PLAIN;
         $message->fullmessagehtml = text_to_html($text);
         $message->smallmessage = $subject;
-        message_send($message);
+
+        // Don't make one error to stop all other notifications.
+        try {
+            message_send($message);
+
+        } catch (Throwable $t) {
+            debugging('availability_paypal IPN: exception while sending message: ' . $t->message);
+        }
     }
 }
 
@@ -266,6 +277,6 @@ function availability_paypal_ipn_exception_handler($ex) {
     if (debugging('', DEBUG_NORMAL)) {
         $logerrmsg .= ' Debug: '.$info->debuginfo."\n".format_backtrace($info->backtrace, true);
     }
-    mtrace($logerrmsg);
+    debugging($logerrmsg);
     exit(0);
 }
