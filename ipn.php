@@ -253,7 +253,14 @@ function availability_paypal_message_error($subject, $data) {
         $message->fullmessageformat = FORMAT_PLAIN;
         $message->fullmessagehtml = text_to_html($text);
         $message->smallmessage = $subject;
-        message_send($message);
+
+        // Don't make one error to stop all other notifications.
+        try {
+            message_send($message);
+
+        } catch (Throwable $t) {
+            debugging('availability_paypal IPN: exception while sending message: ' . $t->message);
+        }
     }
 }
 
