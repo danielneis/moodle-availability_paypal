@@ -157,19 +157,27 @@ if ($c->get_errno()) {
 debugging('availability_paypal IPN verification response: ' . $result, DEBUG_DEVELOPER);
 
 if (strlen($result) > 0) {
-    if (strcmp($result, "VERIFIED") == 0) {          // VALID PAYMENT!
+    if (strcmp($result, "VERIFIED") == 0) {
 
-        $DB->insert_record("availability_paypal_tnx", $data);
+        // Make sure the transaction with the same payment status and same pending reason doesn't exist already.
+        if ($DB->record_exists("availability_paypal_tnx", [
+            'txn_id' => $data->txn_id,
+            'payment_status' => $data->payment_status,
+            'pending_reason' => $data->pending_reason,
+        ])) {
+            availability_paypal_message_error("Transaction $data->txn_id is being repeated!", $data);
+            die;
+        }
 
-        // Check the payment_status and payment_reason.
-
-        // If status is not completed, just tell admin, transaction will be saved later.
-        if ($data->payment_status != "Completed" and $data->payment_status != "Pending") {
-            availability_paypal_message_error("Status not completed or pending. User payment status updated", $data);
+        // In case of unexpected status, warn admins.
+        if ($data->payment_status !== "Completed" && $data->payment_status !== "Pending") {
+            $str = "Status neither completed nor pending: " . $data->payment_status;
+            availability_paypal_message_error($str, $data);
+            die;
         }
 
         // If currency is incorrectly set then someone maybe trying to cheat the system.
-        if ($data->payment_currency != $paypal->currency) {
+        if ($data->payment_currency !== $paypal->currency) {
             $str = "Currency does not match course settings, received: " . $data->payment_currency;
             availability_paypal_message_error($str, $data);
             die;
@@ -182,10 +190,9 @@ if (strlen($result) > 0) {
             die;
         }
 
-        // If status is pending and reason is other than echeck,
-        // then we are on hold until further notice.
-        // Email user to let them know. Email admin.
-        if ($data->payment_status == "Pending" and $data->pending_reason != "echeck") {
+        // If status is pending and reason is other than echeck, then we are on hold until further notice.
+        // Email the user to let them know.
+        if ($data->payment_status === "Pending" && $data->pending_reason !== "echeck") {
 
             $eventdata = new \core\message\message();
             $eventdata->component         = 'availability_paypal';
@@ -200,20 +207,8 @@ if (strlen($result) > 0) {
             message_send($eventdata);
         }
 
-        // If our status is not completed or not pending on an echeck clearance then ignore and die.
-        // This check is redundant at present but may be useful if paypal extend the return codes in the future.
-        if (! ( $data->payment_status == "Completed" or
-               ($data->payment_status == "Pending" and $data->pending_reason == "echeck") ) ) {
-            die;
-        }
-
-        // At this point we only proceed with a status of completed or pending with a reason of echeck.
-
-        // Make sure this transaction doesn't exist already.
-        if ($existing = $DB->get_record("availability_paypal_tnx", array("txn_id" => $data->txn_id))) {
-            availability_paypal_message_error("Transaction $data->txn_id is being repeated!", $data);
-            die;
-        }
+        // At this point we only proceed with a status of completed or pending.
+        $DB->insert_record("availability_paypal_tnx", $data);
 
     } else if (strcmp ($result, "INVALID") == 0) { // ERROR.
         $DB->insert_record("availability_paypal_tnx", $data, false);
