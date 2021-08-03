@@ -59,14 +59,15 @@ require_login($course);
 
 $context = \context::instance_by_id($contextid);
 $tnxparams = ['userid' => $USER->id, 'contextid' => $contextid, 'sectionid' => $sectionid];
-$paymenttnx = $DB->get_record('availability_paypal_tnx', $tnxparams + ['payment_status' => 'Completed']);
 
-if ($paymenttnx) {
+if ($DB->record_exists('availability_paypal_tnx', $tnxparams + ['payment_status' => 'Completed'])) {
     unset($SESSION->availability_paypal->paymentid);
     redirect($context->get_url(), get_string('paymentcompleted', 'availability_paypal'));
 }
 
-$paymenttnx = $DB->get_record('availability_paypal_tnx', $tnxparams);
+// Get the most recent transaction record to see if it is a pending one.
+$paymenttnxs = $DB->get_records('availability_paypal_tnx', $tnxparams, 'timeupdated DESC, id DESC', '*', 0, 1);
+$paymenttnx = reset($paymenttnxs);
 
 $PAGE->set_url('/availability/condition/paypal/view.php', $urlparams);
 $PAGE->set_title($course->fullname);
