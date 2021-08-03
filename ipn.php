@@ -252,7 +252,7 @@ function availability_paypal_message_error($subject, $data) {
         $message = new \core\message\message();
         $message->component = 'availability_paypal';
         $message->name = 'payment_error';
-        $message->userfrom = core_user::get_noreply_user();
+        $message->userfrom = $userfrom;
         $message->userto = $recipient;
         $message->subject = "PayPal ERROR: " . $subject;
         $message->fullmessage = $text;
