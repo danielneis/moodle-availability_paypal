@@ -208,11 +208,10 @@ if (strlen($result) > 0) {
         }
 
         // At this point we only proceed with a status of completed or pending.
-        $DB->insert_record("availability_paypal_tnx", $data);
-
-    } else if (strcmp ($result, "INVALID") == 0) { // ERROR.
         $DB->insert_record("availability_paypal_tnx", $data, false);
-        availability_paypal_message_error("Received an invalid payment notification!! (Fake payment?)", $data);
+
+    } else {
+        availability_paypal_message_error("Payment verification failed", $data);
     }
 }
 
