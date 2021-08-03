@@ -1,3 +1,9 @@
+== Release 16 ==
+
+* Added a new 'PayPal payments' overview report allowing to check all recorded
+  transactions and their status.
+* Requires Moodle 3.11 or higher version.
+
 == Release 15 ==
 
 * Notifications on pending payments and payment errors fixed and improved.

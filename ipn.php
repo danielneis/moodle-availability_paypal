@@ -134,6 +134,12 @@ if (empty($paypal)) {
     die();
 }
 
+// Make a temporary record of the incoming IPN. It will be deleted once the payment is verified. If the verification
+// fails, it will be kept and will allow the admin to debug and/or verify it manually.
+$DB->insert_record("availability_paypal_tnx", array_merge((array) $data, [
+    'payment_status' => 'ToBeVerified',
+]), false);
+
 // Open a connection back to PayPal to validate the data.
 $paypaladdr = empty($CFG->usepaypalsandbox) ? 'ipnpb.paypal.com' : 'ipnpb.sandbox.paypal.com';
 $c = new curl();
@@ -210,7 +216,17 @@ if (strlen($result) > 0) {
         // At this point we only proceed with a status of completed or pending.
         $DB->insert_record("availability_paypal_tnx", $data, false);
 
+        // Remove the temporary transaction record.
+        $DB->delete_records("availability_paypal_tnx", [
+            'payment_status' => 'ToBeVerified',
+            'txn_id' => $data->txn_id,
+            'userid' => $data->userid,
+            'contextid' => $data->contextid,
+            'sectionid' => $data->sectionid,
+        ]);
+
     } else {
+        $data->verification_result = s($result);
         availability_paypal_message_error("Payment verification failed", $data);
     }
 }
