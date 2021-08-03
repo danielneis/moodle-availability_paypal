@@ -92,7 +92,7 @@ $data->sectionid = (int) ($custom[3] ?? -1);
 
 $data->timeupdated = time();
 
-debugging('availability_paypal IPN incoming request: ' . json_encode($data), DEBUG_DEVELOPER);
+debugging('availability_paypal IPN incoming notification: ' . json_encode($data), DEBUG_DEVELOPER);
 
 if (!$user = $DB->get_record("user", array("id" => $data->userid))) {
     $PAGE->set_context(context_system::instance());
