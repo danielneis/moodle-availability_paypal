@@ -147,7 +147,7 @@ $location = "https://{$paypaladdr}/cgi-bin/webscr";
 
 debugging('availability_paypal IPN verification request: ' . json_encode($req), DEBUG_DEVELOPER);
 
-$result = $c->post($location, $req, $options);
+$result = trim($c->post($location, $req, $options));
 
 if ($c->get_errno()) {
     availability_paypal_message_error("Could not access paypal.com to verify payment", $data);
