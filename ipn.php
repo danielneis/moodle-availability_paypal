@@ -77,12 +77,18 @@ $data->payment_type         = optional_param('payment_type', '', PARAM_TEXT);
 $data->payment_gross        = optional_param('mc_gross', '', PARAM_TEXT);
 $data->payment_currency     = optional_param('mc_currency', '', PARAM_TEXT);
 
-$custom = optional_param('custom', '', PARAM_TEXT);
+$custom = optional_param('custom', '', PARAM_ALPHANUMEXT);
 $custom = explode('-', $custom);
 
-$data->userid = (int) ($custom[0] ?? -1);
-$data->contextid = (int) ($custom[1] ?? -1);
-$data->sectionid = (int) ($custom[2] ?? -1);
+if (count($custom) != 4 || $custom[0] !== 'availability_paypal') {
+    // This is not IPN for this plugin.
+    debugging('availability_paypal IPN: custom value does not match expected format');
+    die();
+}
+
+$data->userid = (int) ($custom[1] ?? -1);
+$data->contextid = (int) ($custom[2] ?? -1);
+$data->sectionid = (int) ($custom[3] ?? -1);
 
 $data->timeupdated = time();
 

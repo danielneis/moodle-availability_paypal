@@ -142,7 +142,7 @@ if ($paymenttnx && ($paymenttnx->payment_status == 'Pending')) {
             <input type="hidden" name="quantity" value="1" />
             <input type="hidden" name="on0" value="<?php print_string("user") ?>" />
             <input type="hidden" name="os0" value="<?php p($userfullname) ?>" />
-            <input type="hidden" name="custom" value="<?php echo "{$USER->id}-{$contextid}-{$sectionid}" ?>" />
+            <input type="hidden" name="custom" value="<?php echo "availability_paypal-{$USER->id}-{$contextid}-{$sectionid}" ?>" />
 
             <input type="hidden" name="currency_code" value="<?php p($paypal->currency) ?>" />
             <input type="hidden" name="amount" value="<?php p($cost) ?>" />
