@@ -190,13 +190,13 @@ if (strlen($result) > 0) {
             $eventdata = new \core\message\message();
             $eventdata->component         = 'availability_paypal';
             $eventdata->name              = 'payment_pending';
-            $eventdata->userfrom          = get_admin();
+            $eventdata->userfrom          = core_user::get_noreply_user();
             $eventdata->userto            = $user;
-            $eventdata->subject           = get_string("paypalpaymentpendingsubject", 'availability_paypal');
+            $eventdata->subject           = get_string('paypalpaymentpendingsubject', 'availability_paypal');
             $eventdata->fullmessage       = get_string('paypalpaymentpendingmessage', 'availability_paypal');
             $eventdata->fullmessageformat = FORMAT_PLAIN;
-            $eventdata->fullmessagehtml   = '';
-            $eventdata->smallmessage      = '';
+            $eventdata->fullmessagehtml   = text_to_html($eventdata->fullmessage);
+            $eventdata->smallmessage      = $eventdata->subject;
             message_send($eventdata);
         }
 
