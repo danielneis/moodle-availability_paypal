@@ -158,11 +158,29 @@ $location = "https://{$paypaladdr}/cgi-bin/webscr";
 
 debugging('availability_paypal IPN verification request: ' . json_encode($req), DEBUG_DEVELOPER);
 
-$result = trim($c->post($location, $req, $options));
+// Number of attempts to verify the payment.
+$attempts = 5;
 
-if ($c->get_errno()) {
-    availability_paypal_message_error("Could not access paypal.com to verify payment", $data);
-    die;
+while ($attempts) {
+    $attempts--;
+    $result = trim($c->post($location, $req, $options));
+    $info = $c->get_info();
+
+    if ($c->get_errno()) {
+        availability_paypal_message_error("Could not access paypal.com to verify payment", $data);
+        die;
+    }
+
+    if ($info['http_code'] == 200) {
+        break;
+
+    } else {
+        debugging('availability_paypal IPN verification unexpected response code: ' . $info['http_code'], DEBUG_DEVELOPER);
+
+        if ($attempts) {
+            sleep(3);
+        }
+    }
 }
 
 debugging('availability_paypal IPN verification response: ' . $result, DEBUG_DEVELOPER);
