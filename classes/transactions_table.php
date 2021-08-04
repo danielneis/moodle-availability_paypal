@@ -75,7 +75,12 @@ class transactions_table extends \table_sql {
     public function col_item($data) {
         global $PAGE;
 
-        $context = \context::instance_by_id($data->contextid);
+        $context = \context::instance_by_id($data->contextid, IGNORE_MISSING);
+
+        if (!$context) {
+            return $data->item_name;
+        }
+
         $url = $context->get_url();
         $coursename = '';
         $itemclass = '';
