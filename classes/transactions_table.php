@@ -125,7 +125,6 @@ class transactions_table extends \table_sql {
             $badge = \html_writer::span($data->payment_status, 'badge badge-warning');
 
         } else {
-            // This should not really happen.
             $badge = \html_writer::span($data->payment_status, 'badge badge-danger');
         }
 

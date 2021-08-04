@@ -178,7 +178,7 @@ while ($attempts) {
         debugging('availability_paypal IPN verification unexpected response code: ' . $info['http_code'], DEBUG_DEVELOPER);
 
         if ($attempts) {
-            sleep(3);
+            sleep(1);
         }
     }
 }
@@ -239,19 +239,23 @@ if (strlen($result) > 0) {
         // At this point we only proceed with a status of completed or pending.
         $DB->insert_record("availability_paypal_tnx", $data, false);
 
-        // Remove the temporary transaction record.
-        $DB->delete_records("availability_paypal_tnx", [
-            'payment_status' => 'ToBeVerified',
-            'txn_id' => $data->txn_id,
-            'userid' => $data->userid,
-            'contextid' => $data->contextid,
-            'sectionid' => $data->sectionid,
-        ]);
-
     } else {
+        $DB->insert_record("availability_paypal_tnx", array_merge((array) $data, [
+            'payment_status' => 'Unverified',
+        ]), false);
+
         $data->verification_result = s($result);
         availability_paypal_message_error("Payment verification failed", $data);
     }
+
+    // Remove the temporary transaction record.
+    $DB->delete_records("availability_paypal_tnx", [
+        'payment_status' => 'ToBeVerified',
+        'txn_id' => $data->txn_id,
+        'userid' => $data->userid,
+        'contextid' => $data->contextid,
+        'sectionid' => $data->sectionid,
+    ]);
 }
 
 /**
