@@ -2,6 +2,11 @@
 
 * Added a new 'PayPal payments' overview report allowing to check all recorded
   transactions and their status.
+* Fix IPN listener so that it does not attempt to process notifications not
+  originating in this plugin.
+* Avoid falsely sent "Transaction is being repeated" emails.
+* Fix payment verification so that unverified payment does not unlock the restricted
+  area.
 * Requires Moodle 3.11 or higher version.
 
 == Release 15 ==
