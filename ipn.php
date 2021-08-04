@@ -144,10 +144,15 @@ $DB->insert_record("availability_paypal_tnx", array_merge((array) $data, [
 $paypaladdr = empty($CFG->usepaypalsandbox) ? 'ipnpb.paypal.com' : 'ipnpb.sandbox.paypal.com';
 $c = new curl();
 $options = array(
-    'returntransfer' => true,
-    'httpheader' => array('application/x-www-form-urlencoded', "Host: $paypaladdr"),
-    'timeout' => 30,
+    'CURLOPT_RETURNTRANSFER' => 1,
+    'CURLOPT_HTTPHEADER' => [
+        'Host: ' . $paypaladdr,
+        'Content-Type: application/x-www-form-urlencoded',
+        'Connection: Close',
+    ],
+    'CURLOPT_TIMEOUT' => 30,
     'CURLOPT_HTTP_VERSION' => CURL_HTTP_VERSION_1_1,
+    'CURLOPT_FORBID_REUSE' => 1,
 );
 $location = "https://{$paypaladdr}/cgi-bin/webscr";
 
