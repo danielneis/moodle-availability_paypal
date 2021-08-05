@@ -35,4 +35,13 @@ $capabilities = [
         ],
         'clonepermissionsfrom' => 'moodle/site:config',
     ],
+
+    'availability/paypal:managetransactions' => [
+        'captype' => 'write',
+        'contextlevel' => CONTEXT_SYSTEM,
+        'archetypes' => [
+            'manager' => CAP_ALLOW,
+        ],
+        'clonepermissionsfrom' => 'moodle/site:config',
+    ],
 ];
