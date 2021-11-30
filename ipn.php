@@ -302,7 +302,7 @@ function availability_paypal_message_error($subject, $data) {
             message_send($message);
 
         } catch (Throwable $t) {
-            debugging('availability_paypal IPN: exception while sending message: ' . $t->message);
+            debugging('availability_paypal IPN: exception while sending message: ' . $t->getMessage());
         }
     }
 }
