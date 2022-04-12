@@ -29,9 +29,12 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+define('NO_MOODLE_COOKIES', 1);
+define('NO_DEBUG_DISPLAY', 1);
+
 // This file do not require login because paypal service will use to confirm transactions.
 // @codingStandardsIgnoreLine
-require("../../../config.php");
+require(__DIR__ . '/../../../config.php');
 
 require_once($CFG->libdir . '/filelib.php');
 
@@ -41,7 +44,7 @@ set_exception_handler('availability_paypal_ipn_exception_handler');
 
 // Keep out casual intruders.
 if (empty($_POST) or !empty($_GET)) {
-    print_error("Sorry, you can not use the script that way.");
+    die("Sorry, you can not use the script that way.");
 }
 
 // Read all the data from PayPal and get it ready for later;
@@ -51,7 +54,7 @@ if (empty($_POST) or !empty($_GET)) {
 $req = 'cmd=_notify-validate';
 
 foreach ($_POST as $key => $value) {
-        $req .= "&$key=".urlencode($value);
+    $req .= "&$key=" . urlencode($value);
 }
 
 $data = new stdclass();
@@ -73,124 +76,186 @@ $data->parent_txn_id        = optional_param('parent_txn_id', '', PARAM_TEXT);
 $data->payment_type         = optional_param('payment_type', '', PARAM_TEXT);
 $data->payment_gross        = optional_param('mc_gross', '', PARAM_TEXT);
 $data->payment_currency     = optional_param('mc_currency', '', PARAM_TEXT);
-$custom = optional_param('custom', '', PARAM_TEXT);
+
+$custom = optional_param('custom', '', PARAM_ALPHANUMEXT);
 $custom = explode('-', $custom);
-$data->userid      = (int)$custom[0];
-$data->contextid   = (int)$custom[1];
-$data->sectionid   = (int)$custom[2];
+
+if (count($custom) != 4 || $custom[0] !== 'availability_paypal') {
+    // This is not IPN for this plugin.
+    debugging('availability_paypal IPN: custom value does not match expected format');
+    die();
+}
+
+$data->userid = (int) ($custom[1] ?? -1);
+$data->contextid = (int) ($custom[2] ?? -1);
+$data->sectionid = (int) ($custom[3] ?? -1);
+
 $data->timeupdated = time();
 
+debugging('availability_paypal IPN incoming notification: ' . json_encode($data), DEBUG_DEVELOPER);
+
 if (!$user = $DB->get_record("user", array("id" => $data->userid))) {
-    availability_paypal_message_error_to_admin("Not a valid user id", $data);
+    $PAGE->set_context(context_system::instance());
+    availability_paypal_message_error("Not a valid user id", $data);
     die;
 }
 
 if (!$context = context::instance_by_id($data->contextid, IGNORE_MISSING)) {
-    availability_paypal_message_error_to_admin("Not a valid context id", $data);
+    $PAGE->set_context(context_system::instance());
+    availability_paypal_message_error("Not a valid context id", $data);
     die;
 }
+
+$PAGE->set_context($context);
 
 if ($context instanceof context_module) {
     $availability = $DB->get_field('course_modules', 'availability', ['id' => $context->instanceid], MUST_EXIST);
 } else {
     $availability = $DB->get_field('course_sections', 'availability', ['id' => $data->sectionid], MUST_EXIST);
 }
+
 $availability = json_decode($availability);
-foreach ($availability->c as $condition) {
-    if ($condition->type == 'paypal') {
-        // TODO: handle more than one paypal for this context.
-        $paypal = $condition;
-        break;
-    } else {
-        availability_paypal_message_error_to_admin("Not a valid context id", $data);
+
+$paypal = null;
+
+if ($availability) {
+    // There can be multiple conditions specified. Find the first of the type "paypal".
+    // TODO: Support more than one paypal condition specified.
+    foreach ($availability->c as $condition) {
+        if ($condition->type == 'paypal') {
+            $paypal = $condition;
+            break;
+        }
     }
 }
+
+if (empty($paypal)) {
+    availability_paypal_message_error("PayPal condition not found while processing incoming IPN", $data);
+    die();
+}
+
+// Make a temporary record of the incoming IPN. It will be deleted once the payment is verified. If the verification
+// fails, it will be kept and will allow the admin to debug and/or verify it manually.
+$DB->insert_record("availability_paypal_tnx", array_merge((array) $data, [
+    'payment_status' => 'ToBeVerified',
+]), false);
 
 // Open a connection back to PayPal to validate the data.
 $paypaladdr = empty($CFG->usepaypalsandbox) ? 'ipnpb.paypal.com' : 'ipnpb.sandbox.paypal.com';
 $c = new curl();
 $options = array(
-    'returntransfer' => true,
-    'httpheader' => array('application/x-www-form-urlencoded', "Host: $paypaladdr"),
-    'timeout' => 30,
+    'CURLOPT_RETURNTRANSFER' => 1,
+    'CURLOPT_HTTPHEADER' => [
+        'Host: ' . $paypaladdr,
+        'Content-Type: application/x-www-form-urlencoded',
+        'Connection: Close',
+    ],
+    'CURLOPT_TIMEOUT' => 30,
     'CURLOPT_HTTP_VERSION' => CURL_HTTP_VERSION_1_1,
+    'CURLOPT_FORBID_REUSE' => 1,
 );
 $location = "https://{$paypaladdr}/cgi-bin/webscr";
-$result = $c->post($location, $req, $options);
 
-if (!$result) {  // Could not connect to PayPal - FAIL.
-    echo "<p>Error: could not access paypal.com</p>";
-    availability_paypal_message_error_to_admin("Could not access paypal.com to verify payment", $data);
-    die;
+debugging('availability_paypal IPN verification request: ' . json_encode($req), DEBUG_DEVELOPER);
+
+// Number of attempts to verify the payment.
+$attempts = 5;
+
+while ($attempts) {
+    $attempts--;
+    $result = trim($c->post($location, $req, $options));
+    $info = $c->get_info();
+
+    if ($c->get_errno()) {
+        availability_paypal_message_error("Could not access paypal.com to verify payment", $data);
+        die;
+    }
+
+    if ($info['http_code'] == 200) {
+        break;
+
+    } else {
+        debugging('availability_paypal IPN verification unexpected response code: ' . $info['http_code'], DEBUG_DEVELOPER);
+
+        if ($attempts) {
+            sleep(1);
+        }
+    }
 }
 
-// Connection is OK, so now we post the data to validate it.
-
-// Now read the response and check if everything is OK.
+debugging('availability_paypal IPN verification response: ' . $result, DEBUG_DEVELOPER);
 
 if (strlen($result) > 0) {
-    if (strcmp($result, "VERIFIED") == 0) {          // VALID PAYMENT!
+    if (strcmp($result, "VERIFIED") == 0) {
 
-        $DB->insert_record("availability_paypal_tnx", $data);
+        // Make sure the transaction with the same payment status and same pending reason doesn't exist already.
+        if ($DB->record_exists("availability_paypal_tnx", [
+            'txn_id' => $data->txn_id,
+            'payment_status' => $data->payment_status,
+            'pending_reason' => $data->pending_reason,
+        ])) {
+            availability_paypal_message_error("Transaction $data->txn_id is being repeated!", $data);
+            die;
+        }
 
-        // Check the payment_status and payment_reason.
-
-        // If status is not completed, just tell admin, transaction will be saved later.
-        if ($data->payment_status != "Completed" and $data->payment_status != "Pending") {
-            availability_paypal_message_error_to_admin("Status not completed or pending. User payment status updated", $data);
+        // In case of unexpected status, warn admins.
+        if ($data->payment_status !== "Completed" && $data->payment_status !== "Pending") {
+            $str = "Status neither completed nor pending: " . $data->payment_status;
+            availability_paypal_message_error($str, $data);
+            die;
         }
 
         // If currency is incorrectly set then someone maybe trying to cheat the system.
-        if ($data->payment_currency != $paypal->currency) {
+        if ($data->payment_currency !== $paypal->currency) {
             $str = "Currency does not match course settings, received: " . $data->payment_currency;
-            availability_paypal_message_error_to_admin($str, $data);
+            availability_paypal_message_error($str, $data);
             die;
         }
 
         // If cost is incorrectly set then someone maybe trying to cheat the system.
         if ($data->payment_gross != $paypal->cost) {
             $str = "Payment gross does not match course settings, received: " . $data->payment_gross;
-            availability_paypal_message_error_to_admin($str, $data);
+            availability_paypal_message_error($str, $data);
             die;
         }
 
-        // If status is pending and reason is other than echeck,
-        // then we are on hold until further notice.
-        // Email user to let them know. Email admin.
-        if ($data->payment_status == "Pending" and $data->pending_reason != "echeck") {
+        // If status is pending and reason is other than echeck, then we are on hold until further notice.
+        // Email the user to let them know.
+        if ($data->payment_status === "Pending" && $data->pending_reason !== "echeck") {
 
             $eventdata = new \core\message\message();
             $eventdata->component         = 'availability_paypal';
             $eventdata->name              = 'payment_pending';
-            $eventdata->userfrom          = get_admin();
+            $eventdata->userfrom          = core_user::get_noreply_user();
             $eventdata->userto            = $user;
-            $eventdata->subject           = get_string("paypalpaymentpendingsubject", 'availability_paypal');
+            $eventdata->subject           = get_string('paypalpaymentpendingsubject', 'availability_paypal');
             $eventdata->fullmessage       = get_string('paypalpaymentpendingmessage', 'availability_paypal');
             $eventdata->fullmessageformat = FORMAT_PLAIN;
-            $eventdata->fullmessagehtml   = '';
-            $eventdata->smallmessage      = '';
+            $eventdata->fullmessagehtml   = text_to_html($eventdata->fullmessage);
+            $eventdata->smallmessage      = $eventdata->subject;
             message_send($eventdata);
         }
 
-        // If our status is not completed or not pending on an echeck clearance then ignore and die.
-        // This check is redundant at present but may be useful if paypal extend the return codes in the future.
-        if (! ( $data->payment_status == "Completed" or
-               ($data->payment_status == "Pending" and $data->pending_reason == "echeck") ) ) {
-            die;
-        }
-
-        // At this point we only proceed with a status of completed or pending with a reason of echeck.
-
-        // Make sure this transaction doesn't exist already.
-        if ($existing = $DB->get_record("availability_paypal_tnx", array("txn_id" => $data->txn_id))) {
-            availability_paypal_message_error_to_admin("Transaction $data->txn_id is being repeated!", $data);
-            die;
-        }
-
-    } else if (strcmp ($result, "INVALID") == 0) { // ERROR.
+        // At this point we only proceed with a status of completed or pending.
         $DB->insert_record("availability_paypal_tnx", $data, false);
-        availability_paypal_message_error_to_admin("Received an invalid payment notification!! (Fake payment?)", $data);
+
+    } else {
+        $DB->insert_record("availability_paypal_tnx", array_merge((array) $data, [
+            'payment_status' => 'Unverified',
+        ]), false);
+
+        $data->verification_result = s($result);
+        availability_paypal_message_error("Payment verification failed", $data);
     }
+
+    // Remove the temporary transaction record.
+    $DB->delete_records("availability_paypal_tnx", [
+        'payment_status' => 'ToBeVerified',
+        'txn_id' => $data->txn_id,
+        'userid' => $data->userid,
+        'contextid' => $data->contextid,
+        'sectionid' => $data->sectionid,
+    ]);
 }
 
 /**
@@ -199,27 +264,47 @@ if (strlen($result) > 0) {
  * @param string $subject
  * @param stdClass $data
  */
-function availability_paypal_message_error_to_admin($subject, $data) {
-    $admin = get_admin();
-    $site = get_site();
+function availability_paypal_message_error($subject, $data) {
 
-    $message = "$site->fullname:  Transaction failed:{$subject}";
+    $userfrom = core_user::get_noreply_user();
+    $recipients = get_users_by_capability(context_system::instance(), 'availability/paypal:receivenotifications');
 
-    foreach ($data as $key => $value) {
-        $message .= "{$key} => {$value};";
+    if (empty($recipients)) {
+        // Make sure that someone is notified.
+        $recipients = get_admins();
     }
 
-    $eventdata = new \core\message\message();
-    $eventdata->component         = 'availability_paypal';
-    $eventdata->name              = 'payment_error';
-    $eventdata->userfrom          = $admin;
-    $eventdata->userto            = $admin;
-    $eventdata->subject           = "PayPal ERROR: ".$subject;
-    $eventdata->fullmessage       = $message;
-    $eventdata->fullmessageformat = FORMAT_PLAIN;
-    $eventdata->fullmessagehtml   = '';
-    $eventdata->smallmessage      = '';
-    message_send($eventdata);
+    $site = get_site();
+
+    $text = "$site->fullname: PayPal transaction problem: {$subject}\n\n";
+    $text .= "Transaction data:\n";
+
+    if ($data) {
+        foreach ($data as $key => $value) {
+            $text .= "* {$key} => {$value}\n";
+        }
+    }
+
+    foreach ($recipients as $recipient) {
+        $message = new \core\message\message();
+        $message->component = 'availability_paypal';
+        $message->name = 'payment_error';
+        $message->userfrom = $userfrom;
+        $message->userto = $recipient;
+        $message->subject = "PayPal ERROR: " . $subject;
+        $message->fullmessage = $text;
+        $message->fullmessageformat = FORMAT_PLAIN;
+        $message->fullmessagehtml = text_to_html($text);
+        $message->smallmessage = $subject;
+
+        // Don't make one error to stop all other notifications.
+        try {
+            message_send($message);
+
+        } catch (Throwable $t) {
+            debugging('availability_paypal IPN: exception while sending message: ' . $t->getMessage());
+        }
+    }
 }
 
 /**
@@ -235,6 +320,6 @@ function availability_paypal_ipn_exception_handler($ex) {
     if (debugging('', DEBUG_NORMAL)) {
         $logerrmsg .= ' Debug: '.$info->debuginfo."\n".format_backtrace($info->backtrace, true);
     }
-    mtrace($logerrmsg);
+    debugging($logerrmsg);
     exit(0);
 }
