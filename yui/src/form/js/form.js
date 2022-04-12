@@ -35,25 +35,35 @@ M.availability_paypal.form.getNode = function(json) {
         currencies_options += '</option>';
     }
 
-    var html = '<div><label>';
+    var html = '<div class="container-fluid">';
+    html += '<div class="row">';
+    html += '<div class="col"><label for="paypalbusinessemail">';
     html += M.util.get_string('businessemail', 'availability_paypal');
-    html += '<input name="businessemail" type="email" /></label></div>';
+    html += '</label></div>' +
+            '<div class="col"><input class="form-control" name="businessemail" type="email" id="paypalbusinessemail" />' +
+            '</div></div>';
 
-    html += '<div><label>';
+    html += '<div class="row mt-3">';
+    html += '<div class="col"><label for="paypalcurrency">';
     html += M.util.get_string('currency', 'availability_paypal');
-    html += '<select name="currency" />' + currencies_options + '</select></label></div>';
+    html += '</label></div><div class="col"><select class="form-control" name="currency" id="paypalcurrency" />' +
+            currencies_options + '</select></div></div>';
 
-    html += '<div><label>';
+    html += '<div class="row mt-3">';
+    html += '<div class="col"><label for="paypalcost">';
     html += M.util.get_string('cost', 'availability_paypal');
-    html += '<input name="cost" type="text" /></label></div>';
+    html += '</label></div><div class="col"><input class="form-control" name="cost" type="text" id="paypalcost" /></div></div>';
 
-    html += '<div><label>';
+    html += '<div class="row mt-3">';
+    html += '<div class="col"><label for="paypalitemname">';
     html += M.util.get_string('itemname', 'availability_paypal');
-    html += '<input name="itemname" type="text" /></label></div>';
+    html += '</label></div><div class="col"><input class="form-control" name="itemname" type="text" /></div></div>';
 
-    html += '<div><label>';
+    html += '<div class="row mt-3">';
+    html += '<div class="col"><label for="paypalitemnumber">';
     html += M.util.get_string('itemnumber', 'availability_paypal');
-    html += '<input name="itemnumber" type="text" /></label></div>';
+    html += '</label></div><div class="col"><input class="form-control" name="itemnumber" type="text" /></div></div>';
+    html += '</div>';
 
     var node = Y.Node.create('<span>' + html + '</span>');
 
